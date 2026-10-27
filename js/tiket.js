@@ -93,6 +93,8 @@
     var statusCard = need
       ? '<div class="alert alert-warn">' + U.icon('alert') + '<span>' + (st === 'Bukti Ditolak' ? 'Bukti transfer belum dapat diterima panitia. Silakan transfer/unggah ulang atau hubungi panitia.' : 'Infaq belum tercatat. Transfer ke rekening di bawah, lalu hubungi panitia untuk mengirim bukti.') + '</span></div>' +
         S.rekening({ bank_nama: rek.bank, bank_rekening: rek.nomor, bank_atas_nama: rek.atasNama, qris_url: rek.qris }, { cls: 'rek' })
+      : st === 'Bayar Tunai'
+        ? '<div class="alert alert-info">' + U.icon('wallet') + '<span><b>Pembayaran tunai.</b> Serahkan infaq ' + U.rupiah(t.infaq) + ' langsung kepada panitia. Status berubah menjadi <b>Lunas</b> setelah panitia menerima dan mengonfirmasi pembayaran.</span></div>'
       : st === 'Lunas'
         ? '<div class="alert alert-ok">' + U.icon('shield') + '<span>Infaq sudah terverifikasi. Tiket ini siap dipakai untuk check-in.</span></div>'
         : '<div class="alert alert-info">' + U.icon('clock') + '<span>Panitia sedang memeriksa bukti transfer. Status berubah menjadi <b>Lunas</b> setelah terverifikasi — buka menu <a href="#/cek">Cek Pendaftaran</a> untuk memantau.</span></div>';

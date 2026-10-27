@@ -33,8 +33,8 @@
           (p.kontak_wa && open ? '<a class="btn btn-on-navy btn-lg btn-admin-reg" target="_blank" rel="noopener" href="' + U.esc(S.waLink(p.kontak_wa, ['Assalamu\'alaikum, kami kesulitan mendaftar lewat website ' + (p.nama_singkat || 'PASA') + '. Mohon bantuan pendaftaran ananda. Berikut data kami:', '',
             'DATA SANTRI', '1. Nama lengkap:', '2. Nama panggilan:', '3. Jenis kelamin (Ikhwan/Akhwat):', '4. Tanggal lahir (tgl-bulan-tahun):', '5. Jenjang (SD/SMP):',
             '6. Asal sekolah & kelas:', '7. Alamat: provinsi, kota/kabupaten, kecamatan, desa/kelurahan:', '',
-            'DATA WALI', '8. Nama wali (ayah/ibu):', '9. Nomor WhatsApp aktif:', '10. Email aktif (untuk e-tiket):', '',
-            'KAOS & INFAQ', '11. Ukuran kaos:', '12. Nominal infaq (minimal ' + U.rupiah(parseInt(p.infaq_min, 10) || 0) + '):', '13. Foto bukti transfer (kirim di chat ini)', '',
+            'DATA WALI', '8. Nama wali (ayah/ibu):', '9. Nomor WhatsApp aktif:', '10. Email (boleh dikosongkan):', '',
+            'KAOS & INFAQ', '11. Ukuran kaos:', '12. Nominal infaq (minimal ' + U.rupiah(parseInt(p.infaq_min, 10) || 0) + '):', '13. Cara bayar: transfer (kirim foto bukti di chat ini) atau tunai ke panitia', '',
             'LAINNYA', '14. Alergi / kondisi kesehatan ananda (tulis "-" bila tidak ada):', '15. Setuju dengan syarat & ketentuan acara (ya/tidak):', '',
             'Jazakumullahu khairan.'].join('\n'))) + '">' + U.icon('help') + ' Daftar Lewat Admin</a>' : '') +
           '<button type="button" class="btn btn-on-navy btn-lg" data-scroll="kegiatan">Pelajari Kegiatan</button>' +

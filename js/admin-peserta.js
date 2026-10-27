@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var P = window.PASA, U = P.ui, M = P.adm, h = M.h;
-  var STATUS = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak'];
+  var STATUS = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak', 'Bayar Tunai'];
 
   function pct(a, b) { return b > 0 ? Math.min(100, Math.round(a * 100 / b)) : 0; }
   function num(n) { return Number(n || 0).toLocaleString('id-ID'); }
@@ -42,7 +42,7 @@
         '<div class="meter"><i style="width:' + pct(d.totalPendaftar, d.kuota) + '%"></i></div><p>Terisi ' + pct(d.totalPendaftar, d.kuota) + '% · sisa kuota <b>' + num(d.sisaKuota) + '</b> santri</p></div>' +
         '<div class="stat card"><span class="stat-ic sage">' + U.icon('wallet') + '</span><small>INFAQ TERVERIFIKASI</small><b>' + U.rupiah(d.infaq.terhimpun) + '</b>' +
         '<div class="meter sage"><i style="width:' + pct(d.infaq.terhimpun, tgt) + '%"></i></div><p>' + (tgt ? 'Target ' + U.rupiah(tgt) + ' (' + pct(d.infaq.terhimpun, tgt) + '%) · ' : '') + 'menunggu verifikasi ' + U.rupiah(d.infaq.pending) + '</p></div>' +
-        '<a class="stat card warn" href="#/bayar"><span class="stat-ic orange">' + U.icon('verify') + '</span><small>BUTUH VERIFIKASI</small><b>' + num(st['Bukti Sedang Dicek']) + ' <em>bukti</em></b><p>Menunggu bukti: ' + num(st['Menunggu Bukti']) + ' · ditolak: ' + num(st['Bukti Ditolak']) + '</p><span class="go">Tinjau sekarang ' + U.icon('arrow-right') + '</span></a>' +
+        '<a class="stat card warn" href="#/bayar"><span class="stat-ic orange">' + U.icon('verify') + '</span><small>BUTUH VERIFIKASI</small><b>' + num(st['Bukti Sedang Dicek']) + ' <em>bukti</em></b><p>Menunggu bukti: ' + num(st['Menunggu Bukti']) + ' · bayar tunai: ' + num(st['Bayar Tunai']) + ' · ditolak: ' + num(st['Bukti Ditolak']) + '</p><span class="go">Tinjau sekarang ' + U.icon('arrow-right') + '</span></a>' +
         '<a class="stat card" href="#/scan"><span class="stat-ic">' + U.icon('qr') + '</span><small>CHECK-IN KEDATANGAN</small><b>' + num(d.kehadiran.hadir) + ' <em>/ ' + num(d.kehadiran.total) + ' santri</em></b><div class="meter"><i style="width:' + pct(d.kehadiran.hadir, d.kehadiran.total) + '%"></i></div><p>Sesi: ' + h(d.kehadiran.sesi || '—') + '</p></a>' +
         '</div>' +
         '<div class="two-col"><section class="card pad"><div class="sec-h"><div><span class="eyebrow">Logistik peserta</span><h2>Rekap Ukuran Kaos</h2></div><span class="badge">Total ' + num(d.totalPendaftar) + ' kaos</span></div><div class="size-row">' + ukr + '</div></section>' +
@@ -107,7 +107,7 @@
   // =====================================================================
   // DAFTAR PESERTA (dipakai Verifikasi Bayar & Data Peserta)
   // =====================================================================
-  var TABS = [['', 'Semua', 'semua'], ['Bukti Sedang Dicek', 'Perlu Verifikasi', 'Bukti Sedang Dicek'], ['Lunas', 'Lunas', 'Lunas'], ['Menunggu Bukti', 'Menunggu Bukti', 'Menunggu Bukti'], ['Bukti Ditolak', 'Ditolak', 'Bukti Ditolak']];
+  var TABS = [['', 'Semua', 'semua'], ['Bukti Sedang Dicek', 'Perlu Verifikasi', 'Bukti Sedang Dicek'], ['Lunas', 'Lunas', 'Lunas'], ['Bayar Tunai', 'Bayar Tunai', 'Bayar Tunai'], ['Menunggu Bukti', 'Menunggu Bukti', 'Menunggu Bukti'], ['Bukti Ditolak', 'Ditolak', 'Bukti Ditolak']];
 
   function blob(p) { return p._s || (p._s = [p.nama, p.panggilan, p.wali, p.kode, p.wa, p.email, p.sekolah, p.alamat].join(' ').toLowerCase()); }
 
@@ -230,6 +230,7 @@
         var row = t.closest('.prow[data-id]'); if (!row) return;
         var p = find(row.getAttribute('data-id')); if (!p) return;
         if (t.closest('[data-acc]')) {
+          if (p.statusInfaq === 'Bayar Tunai') return M.confirm('Pembayaran tunai diterima?', p.nama + ' memilih bayar tunai. Tandai Lunas setelah uang diterima panitia?', 'Tandai Lunas').then(function (ok) { if (ok) setStatus([p.id], 'Lunas', ''); });
           if (p.statusInfaq === 'Menunggu Bukti') return M.confirm('ACC tanpa bukti?', p.nama + ' belum mengunggah bukti. Tandai Lunas (mis. bayar tunai)?', 'Tandai Lunas').then(function (ok) { if (ok) setStatus([p.id], 'Lunas', ''); });
           return setStatus([p.id], 'Lunas', '');
         }
@@ -308,7 +309,7 @@
         M.fieldHtml('f_alamat', 'Alamat lengkap santri', { type: 'textarea', rows: 2, value: p.alamat, cls: 'span2' }) +
         M.fieldHtml('f_wali', 'Nama wali', { value: p.wali, req: 1 }) +
         M.fieldHtml('f_wa', 'WhatsApp wali', { value: p.wa, req: 1, type: 'tel' }) +
-        M.fieldHtml('f_email', 'Email wali', { value: p.email, req: 1, type: 'email', cls: 'span2' }) +
+        M.fieldHtml('f_email', 'Email wali (opsional)', { value: p.email, type: 'email', cls: 'span2' }) +
         '<div class="field"><label class="lbl" for="f_ukuran">Ukuran kaos</label><select class="select" id="f_ukuran">' + ukr.map(function (u) { return '<option value="' + h(u.label) + '"' + (u.label === p.ukuran ? ' selected' : '') + '>' + h(u.label) + ' (' + h(u.lebar) + '×' + h(u.panjang) + ' cm)</option>'; }).join('') + '</select></div>' +
         M.fieldHtml('f_infaq', 'Infaq (Rp)', { type: 'number', value: p.infaq || '', min: 0, req: 1 }) +
         (edit ? '' : '<div class="field"><label class="lbl" for="f_status">Status infaq</label><select class="select" id="f_status">' + STATUS.map(function (s) { return '<option' + (s === 'Lunas' ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>') +

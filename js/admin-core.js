@@ -83,7 +83,7 @@
   // Peserta, sesi, ukuran, dan check-in dimuat SEKALI lewat adminBootstrap lalu disimpan di memori
   // (sengaja tidak ditulis ke disk karena berisi data anak). Pencarian, filter, penghitungan, dan
   // perubahan status dikerjakan di browser, sehingga layar tidak menunggu server.
-  var STATUS_L = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak'];
+  var STATUS_L = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak', 'Bayar Tunai'];
   var ST = { ready: false, peserta: [], sesi: [], ukuran: [], checkin: [], dash: null, at: 0 };
   var subs = [], inflight = null, pending = 0, refreshTimer = 0;
   function notify() { subs.slice().forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }

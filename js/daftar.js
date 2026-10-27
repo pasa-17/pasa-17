@@ -13,7 +13,7 @@
   var MAX_BYTES = 4 * 1024 * 1024;
 
   function fresh() {
-    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wali: '', wa: '', email: '', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
+    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wali: '', wa: '', email: '', cara: 'transfer', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
   }
   var st = fresh(), root = null, pub = null, guard = null;
 
@@ -139,7 +139,7 @@
   function aside() {
     return '<aside class="reg-aside" aria-label="Ringkasan"><section class="card sum-card" aria-labelledby="h-sum"><div class="sum-head"><h3 id="h-sum">' + U.icon('idcard') + ' Ringkasan Pendaftar</h3><span class="badge" id="sumStep"></span></div>' +
       '<div id="sumBody"></div>' +
-      '<ul class="checks"><li>' + U.icon('shield') + '<span>Bukti transfer diverifikasi manual oleh panitia.</span></li><li>' + U.icon('mail') + '<span>E-tiket QR terbit setelah formulir terkirim dan dikirim ke email wali.</span></li></ul></section>' +
+      '<ul class="checks"><li>' + U.icon('shield') + '<span>Pembayaran diverifikasi manual oleh panitia (transfer atau tunai).</span></li><li>' + U.icon('mail') + '<span>E-tiket QR terbit setelah formulir terkirim; konfirmasi dikirim lewat WhatsApp (dan email bila diisi).</span></li></ul></section>' +
       (p().kontak_wa ? '<div class="help-card"><span class="ic">' + U.icon('help') + '</span><span><b>Butuh Bantuan?</b><small>Hubungi panitia registrasi</small></span><a class="btn btn-soft" href="' + esc(S.waLink(p().kontak_wa, 'Assalamu\'alaikum, saya ingin bertanya tentang pendaftaran ' + p().nama_singkat)) + '" target="_blank" rel="noopener">Chat WA</a></div>' : '') +
       '<div class="loc-card"><span class="thumb">' + U.art('day') + '</span><span><small class="eyebrow">Lokasi kegiatan</small><b>' + esc(String(p().lokasi).split(',')[0]) + '</b><small>' + esc(p().alamat || p().lokasi) + '</small></span></div></aside>';
   }
@@ -203,7 +203,7 @@
     } else if (st.step === 2) {
       h += '<div class="row">' + fld('wali', 'Nama Wali (Ayah/Ibu)', txt('wali', 'Contoh: Hendra Setiawan', { ac: 'name', max: 100 }), { req: true }) + '</div>' +
         '<div class="row two">' + fld('wa', 'Nomor WhatsApp Aktif', txt('wa', 'Contoh: 0812 3456 7890', { type: 'tel', im: 'tel', ac: 'tel', max: 20 }), { req: true, help: 'Dipakai panitia menghubungi wali dan untuk menu Cek Pendaftaran.' }) +
-        fld('email', 'Alamat Email', txt('email', 'contoh@email.com', { type: 'email', im: 'email', ac: 'email', max: 120 }), { req: true, help: 'E-tiket QR dikirim ke email ini.' }) + '</div>' +
+        fld('email', 'Alamat Email', txt('email', 'contoh@email.com', { type: 'email', im: 'email', ac: 'email', max: 120 }), { opt: true, help: 'Boleh dikosongkan. Bila diisi, e-tiket juga dikirim ke email ini; bila kosong, kabar dikirim lewat WhatsApp.' }) + '</div>' +
         '<div class="alert alert-info">' + U.icon('info') + '<span>Satu formulir untuk satu anak. Bila mendaftarkan lebih dari satu anak, isi formulir lagi setelah selesai.</span></div>';
     } else if (st.step === 3) {
       var us = pub.ukuran || [];
@@ -219,8 +219,13 @@
       }).join('') + '</div>') +
         fld('infaq', 'Atau nominal lain', '<div class="input-affix"><span class="pre" aria-hidden="true">Rp</span><input class="input" id="infaq" name="infaq" inputmode="numeric" autocomplete="off" value="' + (isQuick || !cur ? '' : cur) + '" placeholder="Contoh: 175000" aria-describedby="infaq-h infaq-e"></div>',
           { help: 'Minimum ' + U.rupiah(minInfaq()) + '. Boleh lebih sebagai infaq sukarela. <span id="infaqFmt"></span>' }) +
-        '<div><div class="lbl" style="margin-bottom:8px">Transfer ke rekening resmi</div>' + S.rekening(p(), { cls: 'rek-box' }) + '</div>' +
-        fld('bukti', 'Bukti Transfer', buktiHtml(), { req: true, help: 'Foto otomatis dikecilkan agar cepat terkirim. Bukti hanya dapat dilihat panitia.' });
+        group('cara', 'Cara Pembayaran', true, '<div class="chips seg"><label class="chip"><input type="radio" name="cara" value="transfer"' + (d.cara !== 'tunai' ? ' checked' : '') + '><span>Transfer sekarang</span></label><label class="chip"><input type="radio" name="cara" value="tunai"' + (d.cara === 'tunai' ? ' checked' : '') + '><span>Bayar tunai ke panitia</span></label></div>');
+      if (d.cara === 'tunai') {
+        h += '<div class="alert alert-info">' + U.icon('info') + '<span><b>Bayar tunai.</b> Infaq diserahkan langsung kepada panitia (tidak perlu bukti transfer). Pendaftaran Anda tercatat dengan status <b>Bayar Tunai</b> dan menjadi <b>Lunas</b> setelah panitia menerima pembayaran. Konfirmasi dan e-tiket dikirim lewat WhatsApp.</span></div>';
+      } else {
+        h += '<div><div class="lbl" style="margin-bottom:8px">Transfer ke rekening resmi</div>' + S.rekening(p(), { cls: 'rek-box' }) + '</div>' +
+          fld('bukti', 'Bukti Transfer', buktiHtml(), { req: true, help: 'Foto otomatis dikecilkan agar cepat terkirim. Bukti hanya dapat dilihat panitia.' });
+      }
     } else {
       var z = size(), amt = parseInt(d.infaq, 10) || 0, a2 = ageAtEvent(d.tgl_lahir);
       function grp(title, goto, rows) {
@@ -229,8 +234,8 @@
       }
       h += '<dl style="display:grid;gap:12px;margin:0">' +
         grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
-        grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email]]) +
-        grp('Kaos & infaq', 4, [['Kaos', z ? z.label + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
+        grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email || 'Tidak diisi (konfirmasi lewat WhatsApp)']]) +
+        grp('Kaos & infaq', 4, [['Kaos', z ? z.label + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
         fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
           { req: fc('medis').wajib, opt: !fc('medis').wajib, help: 'Membantu tim medis camp menyiapkan penanganan yang tepat.' }) +
         '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
@@ -278,13 +283,13 @@
     } else if (step === 2) {
       if (d.wali.trim().length < 3) e.wali = 'Nama wali wajib diisi.';
       if (!/^0\d{8,13}$/.test(normWa(d.wa))) e.wa = 'Nomor WhatsApp tidak valid. Contoh: 081234567890.';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) e.email = 'Alamat email tidak valid.';
+      if (d.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) e.email = 'Alamat email tidak valid. Kosongkan bila tidak punya email.';
     } else if (step === 3) {
       if (!size()) e.ukuran = 'Pilih ukuran kaos.';
     } else if (step === 4) {
       var n = parseInt(d.infaq, 10);
       if (!(n >= minInfaq())) e.infaq = 'Infaq minimal ' + U.rupiah(minInfaq()) + '.';
-      if (!st.bukti) e.bukti = 'Unggah bukti transfer.';
+      if (d.cara !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
     } else if (step === 5) {
       if (fc('medis').tampil && fc('medis').wajib && !d.medis.trim()) e.medis = 'Catatan medis wajib diisi (tulis "-" bila tidak ada).';
       if (!d.setuju) e.setuju = 'Anda harus menyetujui ketentuan untuk melanjutkan.';
@@ -391,9 +396,10 @@
     var payload = {
       nama: d.nama.trim(), panggilan: d.panggilan.trim(), gender: d.gender, tgl_lahir: d.tgl_lahir, jenjang: d.jenjang, sekolah: d.sekolah.trim(), alamat: (composeAlamat(), d.alamat.trim()),
       wali: d.wali.trim(), wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), medis: d.medis.trim(),
-      setuju: true, bukti: { nama: st.bukti.nama, base64: st.bukti.base64 }
+      setuju: true, cara: d.cara === 'tunai' ? 'tunai' : 'transfer',
+      bukti: d.cara === 'tunai' || !st.bukti ? null : { nama: st.bukti.nama, base64: st.bukti.base64 }
     };
-    st.sending = true; U.showBusy('Mengirim pendaftaran…', 'Mengunggah data dan bukti transfer. Mohon jangan tutup halaman ini.');
+    st.sending = true; U.showBusy('Mengirim pendaftaran…', (st.d.cara === 'tunai' ? 'Mengirim data pendaftaran. ' : 'Mengunggah data dan bukti transfer. ') + 'Mohon jangan tutup halaman ini.');
     var btn = root.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
     A.post('register', payload, 90000).then(function (r) {
       U.hideBusy(); st.sending = false;
@@ -432,6 +438,7 @@
     st.d[n] = t.type === 'checkbox' ? t.checked : t.value;
     clearErr(n);
     if (n === 'tgl_lahir') { var pill = root.querySelector('#agePill'); if (pill) pill.innerHTML = agePill(ageAtEvent(t.value)); }
+    if (n === 'cara') { renderStep(false); return; }
     if (n === 'prov' || n === 'kota' || n === 'kec') wilChange(n); else if (n === 'desa') composeAlamat();
     updateSummary();
   }
