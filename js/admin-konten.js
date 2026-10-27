@@ -136,6 +136,7 @@
       ['jadwal_buka', 'Jadwal buka (WIB)', 'datetime-local', 'Dipakai bila mode jadwal.'], ['jadwal_tutup', 'Jadwal tutup (WIB)', 'datetime-local'],
       ['pesan_tutup', 'Pesan saat ditutup', 'textarea'], ['pesan_penuh', 'Pesan saat kuota penuh', 'textarea'],
       ['syarat_teks', 'Syarat & ketentuan', 'textarea', 'Tampil di formulir dan beranda.'], ['panduan_acara', 'Panduan acara (tampil di e-tiket)', 'textarea'],
+      ['perlengkapan', 'Perlengkapan yang dibawa santri', 'textarea', 'Tulis satu barang per baris (jaket, sajadah, dll). Otomatis dikirim lewat WhatsApp dan email ke wali setelah mendaftar, juga bila admin yang mendaftarkan.'],
       ['link_grup', 'Tautan grup WhatsApp wali', 'url', 'Hanya tampil setelah wali berhasil mendaftar.']] },
     { id: 'infaq', label: 'Infaq & Rekening', fields: [
       ['infaq_min', 'Infaq minimum (Rp)', 'number'], ['infaq_cepat', 'Nominal cepat (pisahkan koma)', 'text', 'Contoh: 100000,150000,200000,250000'], ['target_infaq', 'Target infaq (Rp)', 'number'],
