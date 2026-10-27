@@ -5,7 +5,7 @@
   U.addIcons({
     contacts: '<rect width="20" height="20" x="2" y="2" rx="3"/><circle cx="12" cy="9" r="3"/><path d="M6.5 19a5.5 5.5 0 0 1 11 0"/>'
   });
-  var STATUS = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak'];
+  var STATUS = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak', 'Bayar Tunai'];
   var VARS = ['nama', 'santri', 'kode', 'status', 'acara', 'singkat', 'link_cek', 'link_grup', 'kontak_wa'];
 
   // ---------- helper bersama (dipakai juga oleh CRM) ----------
