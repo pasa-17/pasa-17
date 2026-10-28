@@ -98,7 +98,7 @@
   if (!A.configured()) { showLogin(); }
   else if (M.session().token) {
     app.innerHTML = '<div class="login-wrap"><div class="spin" aria-label="Memuat"></div></div>';
-    M.call('adminMe', {}, 30000).then(function (r) { if (r && r.success) start(); else { M.clearSession(); showLogin(); } })
-      .catch(function (e) { if (!e.auth) { M.clearSession(); showLogin(e.message); } });
+    // Langsung tampilkan portal dan muat data (token diperiksa server pada panggilan pertama) — tanpa menunggu adminMe dulu.
+    start();
   } else showLogin();
 })();
