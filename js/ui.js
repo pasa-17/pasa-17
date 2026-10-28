@@ -241,6 +241,7 @@
 
   P.ui = {
     setFavicon: setFavicon,
+    ukuranNama: function (u) { return (u.untuk === 'L' ? 'Ikhwan ' : u.untuk === 'P' ? 'Akhwat ' : '') + u.label; },
     esc: esc, safeUrl: safeUrl, rupiah: rupiah, fmtDate: fmtDate, fmtRange: fmtRange, todayWib: todayWib, countdown: countdown,
     addIcons: function (o) { Object.keys(o).forEach(function (k) { ICONS[k] = o[k]; }); }, icon: icon, art: art, img: img, installSprite: installSprite, toast: toast, copyText: copyText, openModal: openModal,
     showBusy: showBusy, hideBusy: hideBusy, themeNow: themeNow, setTheme: setTheme, initials: initials

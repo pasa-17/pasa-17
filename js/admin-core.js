@@ -3,6 +3,7 @@
   'use strict';
   var P = window.PASA = window.PASA || {};
   var U = P.ui, A = P.api, esc = U.esc;
+  var UN = (U.ukuranNama || function (u) { return (u.untuk === 'L' ? 'Ikhwan ' : u.untuk === 'P' ? 'Akhwat ' : '') + u.label; });
   var M = P.adm = { pages: {} };
   var KEY = 'pasa17.admin';
   var S = { token: '', nama: '', username: '' };
@@ -153,7 +154,7 @@
       if (sesi) ST.checkin.forEach(function (c) { if (c.sesiId === sesi.id) hadir[c.pid] = 1; });
       d.totalPendaftar = rows.length; d.sisaKuota = Math.max(0, (d.kuota || 0) - rows.length);
       d.statusInfaq = st; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
-      d.rekapUkuran = ST.ukuran.map(function (u) { return { label: U.ukuranNama(u), aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === U.ukuranNama(u); }).length }; });
+      d.rekapUkuran = ST.ukuran.map(function (u) { return { label: UN(u), aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === UN(u); }).length }; });
       d.kehadiran = { hadir: Object.keys(hadir).length, total: rows.length, sesi: sesi ? sesi.nama : '' };
       d.grafikHarian = Object.keys(hari).sort().map(function (k) { return { tanggal: k, jumlah: hari[k] }; });
       return d;

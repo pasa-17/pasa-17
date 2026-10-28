@@ -4,6 +4,7 @@
   var P = window.PASA = window.PASA || {};
   P.pages = P.pages || {};
   var U = P.ui, S = P.shared, A = P.api;
+  var UN = (U.ukuranNama || function (u) { return (u.untuk === 'L' ? 'Ikhwan ' : u.untuk === 'P' ? 'Akhwat ' : '') + u.label; });
   var esc = U.esc;
 
   var STEPS = [
@@ -237,7 +238,7 @@
       h += '<dl style="display:grid;gap:12px;margin:0">' +
         grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
         grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email || 'Tidak diisi (konfirmasi lewat WhatsApp)']]) +
-        grp('Kaos & infaq', 4, [['Kaos', z ? U.ukuranNama(z) + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
+        grp('Kaos & infaq', 4, [['Kaos', z ? UN(z) + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
         fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
           { req: fc('medis').wajib, opt: !fc('medis').wajib, help: 'Membantu tim medis camp menyiapkan penanganan yang tepat.' }) +
         '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
