@@ -115,7 +115,8 @@
     if (d.indexOf('62') === 0) d = '0' + d.slice(2); else if (d.charAt(0) === '8') d = '0' + d;
     return d;
   }
-  function size() { var u = (pub.ukuran || []).filter(function (x) { return x.label === st.d.ukuran; })[0]; return u || null; }
+  function size() { var u = (pub.ukuran || []).filter(function (x) { return x.id === st.d.ukuran; })[0]; return u || null; }
+  function ukuranUntuk() { var g = st.d.gender; return (pub.ukuran || []).filter(function (u) { return !u.untuk || !g || u.untuk === g; }); }
   function quick() { return String(p().infaq_cepat || '').split(',').map(function (x) { return parseInt(x, 10); }).filter(function (n) { return n > 0; }); }
   function minInfaq() { return parseInt(p().infaq_min, 10) || 0; }
   function label(k, def) { return fc(k).label || def; }
@@ -206,9 +207,10 @@
         fld('email', 'Alamat Email', txt('email', 'contoh@email.com', { type: 'email', im: 'email', ac: 'email', max: 120 }), { opt: true, help: 'Boleh dikosongkan. Bila diisi, e-tiket juga dikirim ke email ini; bila kosong, kabar dikirim lewat WhatsApp.' }) + '</div>' +
         '<div class="alert alert-info">' + U.icon('info') + '<span>Satu formulir untuk satu anak. Bila mendaftarkan lebih dari satu anak, isi formulir lagi setelah selesai.</span></div>';
     } else if (st.step === 3) {
-      var us = pub.ukuran || [];
-      h += group('ukuran', 'Ukuran Kaos Lapangan', true, '<div class="tile-grid">' + us.map(function (u) {
-        return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.label) + '"' + (d.ukuran === u.label ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>' + esc(u.lebar) + ' × ' + esc(u.panjang) + ' cm</small></span></label>';
+      var us = ukuranUntuk(), jk = d.gender === 'P' ? 'Akhwat (perempuan)' : d.gender === 'L' ? 'Ikhwan (laki-laki)' : '';
+      h += (jk ? '<div class="alert alert-info">' + U.icon('shirt') + '<span>Kaos untuk <b>' + jk + '</b>. Model kaos Ikhwan dan Akhwat berbeda, jadi ukuran yang tampil sudah disesuaikan.</span></div>' : '') +
+        group('ukuran', 'Ukuran Kaos Lapangan' + (jk ? ' — ' + (d.gender === 'P' ? 'Akhwat' : 'Ikhwan') : ''), true, '<div class="tile-grid">' + us.map(function (u) {
+        return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.id) + '"' + (d.ukuran === u.id ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>' + esc(u.lebar) + ' × ' + esc(u.panjang) + ' cm</small></span></label>';
       }).join('') + '</div>') +
         '<div class="alert alert-info">' + U.icon('info') + '<span>Ukuran kaos <b>anak</b>, tertera <b>lebar × panjang</b> dalam sentimeter. Ukur kaos yang biasa dipakai ananda lalu cocokkan.</span></div>';
     } else if (st.step === 4) {
@@ -235,7 +237,7 @@
       h += '<dl style="display:grid;gap:12px;margin:0">' +
         grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
         grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email || 'Tidak diisi (konfirmasi lewat WhatsApp)']]) +
-        grp('Kaos & infaq', 4, [['Kaos', z ? z.label + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
+        grp('Kaos & infaq', 4, [['Kaos', z ? U.ukuranNama(z) + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
         fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
           { req: fc('medis').wajib, opt: !fc('medis').wajib, help: 'Membantu tim medis camp menyiapkan penanganan yang tepat.' }) +
         '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
@@ -438,6 +440,7 @@
     st.d[n] = t.type === 'checkbox' ? t.checked : t.value;
     clearErr(n);
     if (n === 'tgl_lahir') { var pill = root.querySelector('#agePill'); if (pill) pill.innerHTML = agePill(ageAtEvent(t.value)); }
+    if (n === 'gender') { var zz = size(); if (zz && zz.untuk && zz.untuk !== st.d.gender) st.d.ukuran = ''; }
     if (n === 'cara') { renderStep(false); return; }
     if (n === 'prov' || n === 'kota' || n === 'kec') wilChange(n); else if (n === 'desa') composeAlamat();
     updateSummary();

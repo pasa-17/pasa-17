@@ -153,7 +153,7 @@
       if (sesi) ST.checkin.forEach(function (c) { if (c.sesiId === sesi.id) hadir[c.pid] = 1; });
       d.totalPendaftar = rows.length; d.sisaKuota = Math.max(0, (d.kuota || 0) - rows.length);
       d.statusInfaq = st; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
-      d.rekapUkuran = ST.ukuran.map(function (u) { return { label: u.label, aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === u.label; }).length }; });
+      d.rekapUkuran = ST.ukuran.map(function (u) { return { label: U.ukuranNama(u), aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === U.ukuranNama(u); }).length }; });
       d.kehadiran = { hadir: Object.keys(hadir).length, total: rows.length, sesi: sesi ? sesi.nama : '' };
       d.grafikHarian = Object.keys(hari).sort().map(function (k) { return { tanggal: k, jumlah: hari[k] }; });
       return d;

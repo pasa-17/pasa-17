@@ -143,8 +143,8 @@
           '<h3>' + U.esc(x.judul) + '</h3><p>' + U.esc(x.deskripsi) + '</p></article>';
       }).join('') + '</div>' : '') +
       (pub.ukuran.length ? '<div class="card size-card"><h3>' + U.icon('shirt') + ' Tabel Ukuran Kaos Peserta</h3>' +
-        '<table class="size-table"><caption class="sr-only">Ukuran kaos dalam sentimeter</caption><thead><tr><th scope="col">Ukuran</th><th scope="col">Lebar (cm)</th><th scope="col">Panjang (cm)</th></tr></thead><tbody>' +
-        pub.ukuran.map(function (u) { return '<tr><td>' + U.esc(u.label) + '</td><td>' + U.esc(u.lebar) + '</td><td>' + U.esc(u.panjang) + '</td></tr>'; }).join('') + '</tbody></table>' +
+        '<table class="size-table"><caption class="sr-only">Ukuran kaos dalam sentimeter</caption><thead><tr><th scope="col">Untuk</th><th scope="col">Ukuran</th><th scope="col">Lebar (cm)</th><th scope="col">Panjang (cm)</th></tr></thead><tbody>' +
+        pub.ukuran.map(function (u) { return '<tr><td>' + (u.untuk === 'L' ? 'Ikhwan' : u.untuk === 'P' ? 'Akhwat' : 'Ikhwan &amp; Akhwat') + '</td><td>' + U.esc(u.label) + '</td><td>' + U.esc(u.lebar) + '</td><td>' + U.esc(u.panjang) + '</td></tr>'; }).join('') + '</tbody></table>' +
         '<p class="help">Ukuran kaos anak. Cocokkan dengan kaos yang biasa dipakai ananda.</p></div>' : '') +
       '</section>';
   }

@@ -19,8 +19,8 @@
       fields: [['nama', 'Nama', 'text', '', 1], ['keterangan', 'Keterangan', 'text', 'Contoh: Wali Santri PASA 16'], ['isi', 'Isi testimoni', 'textarea', '', 1], ['rating', 'Bintang', 'select', [['5', '5'], ['4', '4'], ['3', '3'], ['2', '2'], ['1', '1']]], ['baris', 'Baris', 'select', [['1', 'Baris 1'], ['2', 'Baris 2']]]] },
     { key: 'medsos', label: 'Media Sosial', title: 'platform', sub: 'url', flag: 'tampil', hint: 'Tampil di footer, kontak, dan (opsional) email.',
       fields: [['platform', 'Platform', 'text', 'Instagram, YouTube, TikTok…', 1], ['url', 'Tautan', 'url', 'https://…', 1], ['di_email', 'Tampilkan di email', 'select', [['true', 'Ya'], ['false', 'Tidak']]]] },
-    { key: 'ukuran', label: 'Ukuran Kaos', title: 'label', sub: 'lebar', subFmt: function (v, it) { return h(it.lebar) + ' × ' + h(it.panjang) + ' cm'; }, flag: 'aktif', flagLabel: 'Aktif', hint: 'Ukuran anak dalam cm (lebar × panjang). Ukuran yang sudah dipakai peserta hanya bisa dinonaktifkan.',
-      fields: [['label', 'Label', 'text', 'S, M, L, XL', 1], ['lebar', 'Lebar (cm)', 'number', '', 1], ['panjang', 'Panjang (cm)', 'number', '', 1]] },
+    { key: 'ukuran', label: 'Ukuran Kaos', title: 'label', sub: 'lebar', subFmt: function (v, it) { return (it.untuk === 'L' ? 'Ikhwan' : it.untuk === 'P' ? 'Akhwat' : 'Ikhwan & Akhwat') + ' · ' + h(it.lebar) + ' × ' + h(it.panjang) + ' cm'; }, flag: 'aktif', flagLabel: 'Aktif', hint: 'Kaos Ikhwan dan Akhwat berbeda: buat baris terpisah untuk masing-masing (pilih kolom Untuk). Ukuran anak dalam cm (lebar × panjang). Ukuran yang sudah dipakai peserta hanya bisa dinonaktifkan.',
+      fields: [['untuk', 'Untuk', 'select', [['', 'Ikhwan & Akhwat (sama)'], ['L', 'Ikhwan (laki-laki)'], ['P', 'Akhwat (perempuan)']]], ['label', 'Label', 'text', 'S, M, L, XL', 1], ['lebar', 'Lebar (cm)', 'number', '', 1], ['panjang', 'Panjang (cm)', 'number', '', 1]] },
     { key: 'sesi', label: 'Sesi Check-in', title: 'nama', flag: 'aktif', flagLabel: 'Aktif', hint: 'Sesi yang dipakai di Scan QR (bawaan: Kedatangan, Makan, Pulang).',
       fields: [['nama', 'Nama sesi', 'text', 'Contoh: Kedatangan', 1]] }
   ];

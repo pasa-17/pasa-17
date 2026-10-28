@@ -252,7 +252,7 @@
 
       function fillUkuran() {
         var s = el.querySelector('#ukr'); if (!s || s.options.length > 1) return;
-        M.store.data.ukuran.forEach(function (u) { s.insertAdjacentHTML('beforeend', '<option value="' + h(u.label) + '">Kaos ' + h(u.label) + '</option>'); });
+        M.store.data.ukuran.forEach(function (u) { s.insertAdjacentHTML('beforeend', '<option value="' + h(U.ukuranNama(u)) + '">Kaos ' + h(U.ukuranNama(u)) + '</option>'); });
         if (q.ukuran) s.value = q.ukuran;
       }
       off = M.store.on(function () { render(); fillUkuran(); });
@@ -297,7 +297,7 @@
   function pesertaForm(p) {
     var edit = !!p; p = p || {};
     (M.store.ready() ? Promise.resolve(M.store.data.ukuran) : M.run('adminListModul', { modul: 'ukuran' }, { quiet: true }).then(function (r) { return r ? r.data.items : []; })).then(function (items) {
-      var ukr = (items || []).filter(function (u) { return u.aktif === 'true' || u.label === p.ukuran; });
+      var ukr = (items || []).filter(function (u) { return u.aktif === 'true' || U.ukuranNama(u) === p.ukuran; });
       var m = U.openModal({ title: edit ? 'Ubah data ' + p.kode : 'Tambah peserta manual', cls: 'wide', html:
         '<form id="pf" novalidate><div class="form-grid">' +
         M.fieldHtml('f_nama', 'Nama lengkap santri', { value: p.nama, req: 1, cls: 'span2' }) +
@@ -310,7 +310,7 @@
         M.fieldHtml('f_wali', 'Nama wali', { value: p.wali, req: 1 }) +
         M.fieldHtml('f_wa', 'WhatsApp wali', { value: p.wa, req: 1, type: 'tel' }) +
         M.fieldHtml('f_email', 'Email wali (opsional)', { value: p.email, type: 'email', cls: 'span2' }) +
-        '<div class="field"><label class="lbl" for="f_ukuran">Ukuran kaos</label><select class="select" id="f_ukuran">' + ukr.map(function (u) { return '<option value="' + h(u.label) + '"' + (u.label === p.ukuran ? ' selected' : '') + '>' + h(u.label) + ' (' + h(u.lebar) + '×' + h(u.panjang) + ' cm)</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label class="lbl" for="f_ukuran">Ukuran kaos</label><select class="select" id="f_ukuran">' + ukr.map(function (u) { return '<option value="' + h(U.ukuranNama(u)) + '"' + (U.ukuranNama(u) === p.ukuran ? ' selected' : '') + '>' + h(U.ukuranNama(u)) + ' (' + h(u.lebar) + '×' + h(u.panjang) + ' cm)</option>'; }).join('') + '</select></div>' +
         M.fieldHtml('f_infaq', 'Infaq (Rp)', { type: 'number', value: p.infaq || '', min: 0, req: 1 }) +
         (edit ? '' : '<div class="field"><label class="lbl" for="f_status">Status infaq</label><select class="select" id="f_status">' + STATUS.map(function (s) { return '<option' + (s === 'Lunas' ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>') +
         M.fieldHtml('f_metode', 'Metode bayar', { value: p.metodeBayar, ph: 'Transfer BSI / Tunai / QRIS' }) +
