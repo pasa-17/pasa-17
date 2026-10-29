@@ -161,7 +161,7 @@
     el.innerHTML = '<div class="mini-ticket"><div class="mt-top"><span>' + esc(p().nama_singkat) + ' • ' + esc(String(p().lokasi).split(/[,&]/)[0].replace(/\s+$/, '')) + '</span><b>' + (st.step === 5 ? 'Siap dikirim' : 'Draft') + '</b></div>' +
       '<div class="nm">' + esc(d.nama || 'Nama calon santri') + '</div>' +
       '<div class="sub">' + (gl ? esc(gl) : '—') + (a != null && a >= 0 ? ' &bull; Usia ' + a + ' th' : '') + '</div>' +
-      '<div class="mt-grid"><div><small>Kaos peserta</small><b>' + (z ? esc(z.label) + ' (' + esc(z.lebar) + ' × ' + esc(z.panjang) + ' cm)' : '—') + '</b></div>' +
+      '<div class="mt-grid"><div><small>Kaos peserta</small><b>' + (z ? esc(z.label) + ' (LD ' + esc(z.lebar) + ' × TB ' + esc(z.panjang) + ' cm)' : '—') + '</b></div>' +
       '<div><small>Infaq</small><b class="o">' + (amt ? U.rupiah(amt) : '—') + '</b></div></div></div>' +
       '<div class="rows"><div><span>Infaq operasional camp</span><span>' + U.rupiah(amt) + '</span></div><div><span>Biaya verifikasi sistem</span><span>Gratis (Rp0)</span></div>' +
       '<div class="tot"><span>Total diterima</span><b>' + U.rupiah(amt) + '</b></div></div>';
@@ -211,9 +211,9 @@
       var us = ukuranUntuk(), jk = d.gender === 'P' ? 'Akhwat (perempuan)' : d.gender === 'L' ? 'Ikhwan (laki-laki)' : '';
       h += (jk ? '<div class="alert alert-info">' + U.icon('shirt') + '<span>Kaos untuk <b>' + jk + '</b>. Model kaos Ikhwan dan Akhwat berbeda, jadi ukuran yang tampil sudah disesuaikan.</span></div>' : '') +
         group('ukuran', 'Ukuran Kaos Lapangan' + (jk ? ' — ' + (d.gender === 'P' ? 'Akhwat' : 'Ikhwan') : ''), true, '<div class="tile-grid">' + us.map(function (u) {
-        return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.id) + '"' + (d.ukuran === u.id ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>' + esc(u.lebar) + ' × ' + esc(u.panjang) + ' cm</small></span></label>';
+        return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.id) + '"' + (d.ukuran === u.id ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>LD ' + esc(u.lebar) + ' × TB ' + esc(u.panjang) + ' cm</small></span></label>';
       }).join('') + '</div>') +
-        '<div class="alert alert-info">' + U.icon('info') + '<span>Ukuran kaos <b>anak</b>, tertera <b>lebar × panjang</b> dalam sentimeter. Ukur kaos yang biasa dipakai ananda lalu cocokkan.</span></div>';
+        '<figure class="size-guide"><img src="assets/panduan-kaos.png" alt="Cara mengukur kaos: LD lebar dada, TB tinggi bahu" loading="lazy"><figcaption><b>LD</b> = Lebar Dada, <b>TB</b> = Tinggi Bahu (cm). Ukuran kaos <b>anak</b>. Ukur kaos yang biasa dipakai ananda lalu cocokkan, bila ragu pilih satu ukuran di atasnya.</figcaption></figure>';
     } else if (st.step === 4) {
       q = quick();
       var cur = parseInt(d.infaq, 10) || 0, isQuick = q.indexOf(cur) >= 0;
@@ -238,7 +238,7 @@
       h += '<dl style="display:grid;gap:12px;margin:0">' +
         grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
         grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email || 'Tidak diisi (konfirmasi lewat WhatsApp)']]) +
-        grp('Kaos & infaq', 4, [['Kaos', z ? UN(z) + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
+        grp('Kaos & infaq', 4, [['Kaos', z ? UN(z) + ' (LD ' + z.lebar + ' × TB ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
         fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
           { req: fc('medis').wajib, opt: !fc('medis').wajib, help: 'Membantu tim medis camp menyiapkan penanganan yang tepat.' }) +
         '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +

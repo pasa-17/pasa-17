@@ -868,3 +868,7 @@ main { display: block; min-height: 60vh; outline: 0; }
   .hero-stats .s-full { display: none; }
   .hero-stats .s-short { display: inline; }
 }
+
+.size-guide{margin:16px 0 0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;border:1px solid var(--line,#e5e2da);border-radius:16px;background:rgba(127,127,127,.06)}
+.size-guide img{width:100%;max-width:230px;height:auto;display:block}
+.size-guide figcaption{font-size:13px;line-height:1.5;text-align:center;opacity:.85}
