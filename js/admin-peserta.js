@@ -29,8 +29,10 @@
         '<b id="regLbl">' + (d.pendaftaran.status === 'penuh' ? 'KUOTA PENUH' : open ? 'DIBUKA' : 'DITUTUP') + '</b></div>' +
         '<button type="button" class="btn btn-soft btn-sm" id="csvBtn">' + U.icon('download') + ' Ekspor CSV</button>' +
         '<a class="btn btn-dark btn-sm" href="#/scan">' + U.icon('qr') + ' Buka Scanner</a>';
-      var ukr = (d.rekapUkuran || []).map(function (u) {
-        return '<div class="size-pill' + (u.aktif ? '' : ' off') + '"><b>' + h(u.label) + '</b><span>' + num(u.jumlah) + '</span><small>' + pct(u.jumlah, d.totalPendaftar) + '%</small></div>';
+      var ukr = (d.rekapKaos || []).map(function (g) {
+        return '<div class="size-group"><div class="size-gh"><b>' + h(g.nama) + '</b><span class="badge">' + num(g.total) + ' kaos</span></div><div class="size-row">' + g.items.map(function (u) {
+          return '<div class="size-pill' + (u.jumlah ? '' : ' off') + '"><b>' + h(u.label) + '</b><span>' + num(u.jumlah) + '</span><small>' + pct(u.jumlah, g.total) + '%</small></div>';
+        }).join('') + '</div></div>';
       }).join('') || '<p class="muted">Belum ada ukuran.</p>';
       var g = d.grafikHarian || [], gmax = g.reduce(function (m, x) { return Math.max(m, x.jumlah); }, 1);
       var chart = g.length ? '<div class="bars" role="img" aria-label="Grafik pendaftar per hari">' + g.slice(-21).map(function (x) {
@@ -46,7 +48,7 @@
         '<a class="stat card warn" href="#/bayar"><span class="stat-ic orange">' + U.icon('verify') + '</span><small>BUTUH VERIFIKASI</small><b>' + num(st['Bukti Sedang Dicek']) + ' <em>bukti</em></b><p>Menunggu bukti: ' + num(st['Menunggu Bukti']) + ' · bayar tunai: ' + num(st['Bayar Tunai']) + ' · ditolak: ' + num(st['Bukti Ditolak']) + '</p><span class="go">Tinjau sekarang ' + U.icon('arrow-right') + '</span></a>' +
         '<a class="stat card" href="#/scan"><span class="stat-ic">' + U.icon('qr') + '</span><small>CHECK-IN KEDATANGAN</small><b>' + num(d.kehadiran.hadir) + ' <em>/ ' + num(d.kehadiran.total) + ' santri</em></b><div class="meter"><i style="width:' + pct(d.kehadiran.hadir, d.kehadiran.total) + '%"></i></div><p>Sesi: ' + h(d.kehadiran.sesi || '—') + '</p></a>' +
         '</div>' +
-        '<div class="two-col"><section class="card pad"><div class="sec-h"><div><span class="eyebrow">Logistik peserta</span><h2>Rekap Ukuran Kaos</h2></div><span class="badge">Total ' + num(d.totalPendaftar) + ' kaos</span></div><div class="size-row">' + ukr + '</div></section>' +
+        '<div class="two-col"><section class="card pad"><div class="sec-h"><div><span class="eyebrow">Logistik peserta</span><h2>Rekap Ukuran Kaos</h2></div><span class="badge">Total ' + num(d.totalPendaftar) + ' kaos</span></div><div class="size-groups">' + ukr + '</div></section>' +
         '<section class="card pad dark"><span class="eyebrow on-navy">Email blast</span><h2>Kirim Ulang E-Tiket</h2><p>Kirim ulang e-tiket QR ke wali yang statusnya Lunas dan emailnya belum terkirim. Maksimal 25 email per kiriman; sisa kuota email hari ini: <b>' + (d.sisaKuotaEmail == null ? '—' : num(d.sisaKuotaEmail)) + '</b>.</p>' +
         '<button type="button" class="btn btn-primary" id="blastBtn">' + U.icon('send') + ' Kirim Ulang E-Tiket</button></section></div>' +
         '<section class="card pad"><div class="sec-h"><div><span class="eyebrow">Tren</span><h2>Pendaftar per Hari</h2></div></div>' + chart + '</section>';

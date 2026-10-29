@@ -476,3 +476,9 @@ a.stat:hover { box-shadow: var(--sh3); }
   .tl li { grid-template-columns: 66px 1fr; gap: 8px; padding: 8px 10px; font-size: 12.5px; }
   .dgrp { padding: 10px; gap: 6px; margin-top: 8px; }
 }
+
+/* Rekap kaos dipisah Ikhwan / Akhwat */
+.size-group + .size-group { margin-top: 18px; }
+.size-gh { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.size-gh b { font-size: 14px; }
+.size-pill.off { opacity: .55; }

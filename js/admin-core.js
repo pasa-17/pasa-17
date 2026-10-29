@@ -155,6 +155,16 @@
       d.totalPendaftar = rows.length; d.sisaKuota = Math.max(0, (d.kuota || 0) - rows.length);
       d.statusInfaq = st; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
       d.rekapUkuran = ST.ukuran.map(function (u) { return { label: UN(u), aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === UN(u); }).length }; });
+      // Rekap kaos dipisah Ikhwan / Akhwat (untuk pemesanan): hitung dari jenis kelamin santri + ukuran.
+      var dasar = function (v) { return String(v || '').replace(/^(Ikhwan|Akhwat)\s+/, ''); };
+      var labels = [];
+      ST.ukuran.forEach(function (u) { if (labels.indexOf(u.label) < 0) labels.push(u.label); });
+      rows.forEach(function (p) { var b = dasar(p.ukuran); if (b && labels.indexOf(b) < 0) labels.push(b); });
+      d.rekapKaos = ['L', 'P'].map(function (g) {
+        var mine = rows.filter(function (p) { return p.gender === g; });
+        return { gender: g, nama: g === 'L' ? 'Ikhwan (Laki-laki)' : 'Akhwat (Perempuan)', total: mine.length,
+          items: labels.map(function (lb) { return { label: lb, jumlah: mine.filter(function (p) { return dasar(p.ukuran) === lb; }).length }; }) };
+      });
       d.kehadiran = { hadir: Object.keys(hadir).length, total: rows.length, sesi: sesi ? sesi.nama : '' };
       d.grafikHarian = Object.keys(hari).sort().map(function (k) { return { tanggal: k, jumlah: hari[k] }; });
       return d;
