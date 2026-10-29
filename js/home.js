@@ -153,7 +153,7 @@
     var p = pub.pengaturan, open = pub.pendaftaran && pub.pendaftaran.status === 'buka';
     return '<section class="sec" aria-labelledby="h-infaq"><div class="infaq"><div><div class="eyebrow on-navy">Investasi akhirat &amp; pembinaan ummat</div>' +
       '<h2 id="h-infaq">Infaq Operasional Santri</h2>' +
-      '<p style="margin-top:12px">Kegiatan PASA diselenggarakan dengan prinsip ukhuwah dan ta\'awun. Infaq operasional mencakup konsumsi 3 hari 2 malam, sewa perlengkapan, modul tahfidz, seragam lapangan, serta subsidi santri yatim dhuafa.</p>' +
+      '<p style="margin-top:12px">Kegiatan PASA diselenggarakan dengan prinsip ukhuwah dan ta\'awun. Infaq operasional mencakup konsumsi 3 hari 2 malam.</p>' +
       '<div class="min"><small>Minimum infaq kemitraan</small><b>' + U.rupiah(p.infaq_min) + ' <span style="font-size:15px;font-weight:600;color:var(--on-navy-muted)">/ santri</span></b></div>' +
       '<p style="margin-top:8px;font-size:14px">Bebas menambah nominal infaq sukarela.</p></div>' +
       '<div>' + S.rekening(p) + '<a class="btn btn-primary btn-block btn-lg" style="margin-top:14px" href="#/' + (open ? 'daftar' : 'cek') + '">' + (open ? 'Daftar &amp; Salurkan Infaq' : 'Cek Status Pendaftaran') + ' ' + U.icon('arrow-right') + '</a></div></div></section>';
