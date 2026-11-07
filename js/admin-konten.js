@@ -131,7 +131,7 @@
     { id: 'acara', label: 'Acara & Pendaftaran', fields: [
       ['nama_acara', 'Nama acara', 'text'], ['nama_singkat', 'Nama singkat', 'text'], ['lokasi', 'Lokasi', 'text'],
       ['tanggal_mulai', 'Tanggal mulai', 'date'], ['tanggal_selesai', 'Tanggal selesai', 'date'],
-      ['kuota', 'Kuota santri', 'number'], ['usia_min', 'Usia minimal', 'number'], ['usia_maks', 'Usia maksimal', 'number'],
+      ['kuota', 'Kuota santri', 'number'],
       ['pendaftaran_mode', 'Mode buka/tutup pendaftaran', 'select', [['manual', 'Manual (pakai tombol di Ringkasan)'], ['jadwal', 'Otomatis menurut jadwal']]],
       ['jadwal_buka', 'Jadwal buka (WIB)', 'datetime-local', 'Dipakai bila mode jadwal.'], ['jadwal_tutup', 'Jadwal tutup (WIB)', 'datetime-local'],
       ['pesan_tutup', 'Pesan saat ditutup', 'textarea'], ['pesan_penuh', 'Pesan saat kuota penuh', 'textarea'],

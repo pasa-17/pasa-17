@@ -51,8 +51,8 @@
       el.innerHTML = '<div class="wrap"><div class="page-head"><div class="eyebrow">Panduan</div><h1>Cara Mendaftarkan Santri</h1>' +
         '<p>Satu formulir untuk satu anak. Prosesnya sekitar lima menit lewat HP — siapkan hal-hal berikut.</p></div>' +
         '<ul class="s4" style="margin-top:24px">' +
-        li('user', 'Data santri', 'Nama lengkap, tanggal lahir (usia ' + esc(p.usia_min) + '–' + esc(p.usia_maks) + ' tahun pada hari acara), jenjang, dan asal sekolah.') +
-        li('users', 'Kontak wali', 'Nomor WhatsApp aktif dan alamat email. E-tiket dikirim ke email ini.') +
+        li('user', 'Data santri', 'Nama lengkap, jenis kelamin, jenjang (SD atau SMP), dan alamat tempat tinggal.') +
+        li('users', 'Kontak wali', 'Cukup nomor WhatsApp aktif. Email boleh dikosongkan.') +
         li('shirt', 'Ukuran kaos', 'Pilih ukuran anak berdasarkan tabel lebar × panjang (cm) di formulir.') +
         li('wallet', 'Infaq &amp; bukti transfer', 'Minimum ' + U.rupiah(p.infaq_min) + '. Transfer ke rekening resmi lalu unggah fotonya (JPG/PNG/WebP/PDF, maks. 4 MB).') +
         '</ul>' +

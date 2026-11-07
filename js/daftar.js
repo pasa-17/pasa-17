@@ -1,4 +1,4 @@
-/* Halaman Formulir Pendaftaran — 5 langkah */
+/* Halaman Formulir Pendaftaran — satu halaman singkat (tanpa tahapan) */
 (function () {
   'use strict';
   var P = window.PASA = window.PASA || {};
@@ -6,19 +6,18 @@
   var U = P.ui, S = P.shared, A = P.api;
   var UN = (U.ukuranNama || function (u) { return (u.untuk === 'L' ? 'Ikhwan ' : u.untuk === 'P' ? 'Akhwat ' : '') + u.label; });
   var esc = U.esc;
-
-  var STEPS = [
-    { t: 'Santri', ic: 'user' }, { t: 'Orang Tua', ic: 'users' }, { t: 'Kaos', ic: 'shirt' },
-    { t: 'Infaq', ic: 'wallet' }, { t: 'Syarat', ic: 'shield' }
-  ];
   var MAX_BYTES = 4 * 1024 * 1024;
+  var ORDER = ['prov', 'kota', 'kec', 'desa'];
+  var LBL = { prov: 'Provinsi', kota: 'Kota / Kabupaten', kec: 'Kecamatan', desa: 'Desa / Kelurahan' };
+  var PARENT = { kota: 'prov', kec: 'kota', desa: 'kec' };
 
   function fresh() {
-    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wali: '', wa: '', email: '', cara: 'transfer', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
+    return { d: { nama: '', gender: '', jenjang: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wa: '', email: '', cara: 'transfer', ukuran: '', infaq: '', medis: '', setuju: false },
+      bukti: null, err: {}, sending: false, pan: { open: false, level: 'prov', q: '' } };
   }
   var st = fresh(), root = null, pub = null, guard = null;
 
-  // ---------- alamat berjenjang: provinsi > kota/kab > kecamatan > desa ----------
+  // ---------- alamat: satu kolom, memilih bertahap provinsi > kota/kab > kecamatan > desa ----------
   var WIL_SRC = [
     { b: 'https://www.emsifa.com/api-wilayah-indonesia/api/', p: { prov: 'provinces.json', kota: 'regencies/{id}.json', kec: 'districts/{id}.json', desa: 'villages/{id}.json' } },
     { b: 'https://ibnux.github.io/data-indonesia/', p: { prov: 'provinsi.json', kota: 'kabupaten/{id}.json', kec: 'kecamatan/{id}.json', desa: 'kelurahan/{id}.json' } },
@@ -42,75 +41,83 @@
         throw e;
       });
   }
-  var WLEVEL = { prov: ['prov', 'provinces.json', null], kota: ['kota', 'regencies/', 'prov'], kec: ['kec', 'districts/', 'kota'], desa: ['desa', 'villages/', 'kec'] };
   function wilList(level) {
     if (level === 'prov') return W.prov || [];
-    var par = st.d[WLEVEL[level][2]]; return (par && W[level][par]) || [];
+    var par = st.d[PARENT[level]]; return (par && W[level][par]) || [];
   }
   function wilName(level) {
     var id = st.d[level], l = wilList(level);
     for (var i = 0; i < l.length; i++) if (l[i].id === id) return titleCase(l[i].name);
     return '';
   }
-  function optHtml(level, ph) {
-    var l = wilList(level), cur = st.d[level];
-    return '<option value="">' + esc(ph) + '</option>' + l.map(function (o) { return '<option value="' + esc(o.id) + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(titleCase(o.name)) + '</option>'; }).join('');
-  }
-  function wilSel(level, lbl, ph) {
-    var dis = level !== 'prov' && !st.d[WLEVEL[level][2]];
-    return fld(level, lbl, '<select class="select" id="' + level + '" name="' + level + '"' + (dis ? ' disabled' : '') + ' aria-describedby="' + level + '-e">' + optHtml(level, ph) + '</select>', { req: true });
-  }
-  function wilFill(level) {
-    var el = root && root.querySelector('#' + level); if (!el) return;
-    var ph = { prov: 'Pilih provinsi', kota: 'Pilih kota / kabupaten', kec: 'Pilih kecamatan', desa: 'Pilih desa / kelurahan' }[level];
-    var par = level === 'prov' ? 'x' : st.d[WLEVEL[level][2]];
-    var wait = level === 'prov' ? !W.prov : (par && !W[level][par]);
-    el.innerHTML = wait ? '<option value="">Memuat…</option>' : optHtml(level, ph);
-    el.disabled = !par || wait;
-  }
   function wilLoad(level) {
-    var key = level === 'prov' ? 'prov' : level + ':' + st.d[WLEVEL[level][2]];
-    var par = level === 'prov' ? '' : st.d[WLEVEL[level][2]];
-    if (level !== 'prov' && !par) { wilFill(level); return; }
-    if ((level === 'prov' && W.prov) || (level !== 'prov' && W[level][par])) { wilFill(level); return; }
-    if (W.busy[key]) return;
-    W.busy[key] = 1; wilFill(level);
+    var par = level === 'prov' ? '' : st.d[PARENT[level]];
+    if (level !== 'prov' && !par) return;
+    if ((level === 'prov' && W.prov) || (level !== 'prov' && W[level][par])) return;
+    var key = level === 'prov' ? 'prov' : level + ':' + par;
+    if (W.busy[key]) return; W.busy[key] = 1;
     wilGet(level, par).then(function (a) {
       if (level === 'prov') W.prov = a; else W[level][par] = a;
-      delete W.busy[key]; wilFill(level);
+      delete W.busy[key]; renderPanel();
     }, function () {
-      delete W.busy[key]; W.fail = true;
-      if (st.step === 1 && root && root.querySelector('#formCard')) renderStep(false);
+      delete W.busy[key]; W.fail = true; st.pan.open = false;
+      if (root && root.querySelector('[data-sec="santri"]')) renderSec('santri');
     });
   }
-  function wilInit() { if (fcAlamatRol()) { wilLoad('prov'); wilLoad('kota'); wilLoad('kec'); wilLoad('desa'); } }
-  function fcAlamatRol() { return fc('alamat').tampil && !W.fail; }
-  function wilChange(level) {
-    var order = ['prov', 'kota', 'kec', 'desa'], i = order.indexOf(level);
-    for (var j = i + 1; j < order.length; j++) { st.d[order[j]] = ''; clearErr(order[j]); }
-    if (i < 3) { wilLoad(order[i + 1]); for (var k = i + 2; k < 4; k++) wilFill(order[k]); }
-    composeAlamat();
-  }
+  function alamatAktif() { return fc('alamat').tampil && !W.fail; }
   function composeAlamat() {
-    if (!fcAlamatRol()) return;
+    if (!alamatAktif()) return;
     var parts = [wilName('desa') && ('Desa/Kel. ' + wilName('desa')), wilName('kec') && ('Kec. ' + wilName('kec')), wilName('kota'), wilName('prov')].filter(Boolean);
     st.d.alamat = (st.d.prov && st.d.kota && st.d.kec && st.d.desa) ? parts.join(', ') : '';
+  }
+  function addrText() {
+    if (st.d.alamat) return st.d.alamat;
+    return ORDER.map(wilName).filter(Boolean).reverse().join(' › ');
+  }
+  function firstEmpty() { for (var i = 0; i < 4; i++) if (!st.d[ORDER[i]]) return ORDER[i]; return 'prov'; }
+  function listHtml() {
+    var lv = st.pan.level, q = st.pan.q.toLowerCase().trim(), l = wilList(lv), cur = st.d[lv];
+    if (!l.length) return '<li class="ap-empty">Memuat daftar…</li>';
+    var f = l.filter(function (o) { return !q || titleCase(o.name).toLowerCase().indexOf(q) >= 0; });
+    if (!f.length) return '<li class="ap-empty">Tidak ditemukan</li>';
+    return f.map(function (o) { return '<li><button type="button" role="option" class="ap-item' + (o.id === cur ? ' on' : '') + '" data-addr-pick="' + esc(o.id) + '">' + esc(titleCase(o.name)) + U.icon('chevron-right') + '</button></li>'; }).join('');
+  }
+  function renderPanel() {
+    var box = root && root.querySelector('#addrPanel'); if (!box) return;
+    var btn = root.querySelector('#addrBtn'), pan = st.pan;
+    if (btn) { btn.classList.toggle('open', pan.open); btn.setAttribute('aria-expanded', pan.open ? 'true' : 'false'); var v = btn.querySelector('.addr-val'); if (v) { v.textContent = addrText() || 'Ketuk di sini untuk memilih alamat…'; btn.classList.toggle('has', !!addrText()); } }
+    box.hidden = !pan.open;
+    if (!pan.open) { box.innerHTML = ''; return; }
+    var hadFocus = document.activeElement && document.activeElement.id === 'addrQ';
+    var lv = pan.level, crumbs = ORDER.slice(0, ORDER.indexOf(lv)).map(function (k) { return '<button type="button" class="crumb" data-addr-back="' + k + '" title="Ubah ' + LBL[k] + '">' + esc(wilName(k)) + '</button>'; }).join('<span class="sep">›</span>');
+    box.innerHTML = '<div class="ap-top"><b>Pilih ' + LBL[lv] + ' <small>(' + (ORDER.indexOf(lv) + 1) + '/4)</small></b><button type="button" class="ap-x" data-addr-close aria-label="Tutup pilihan alamat">' + U.icon('x') + '</button></div>' +
+      (crumbs ? '<div class="ap-crumbs">' + crumbs + '</div>' : '') +
+      '<input class="input ap-q" id="addrQ" type="search" placeholder="Cari ' + LBL[lv].toLowerCase() + '…" autocomplete="off" value="' + esc(pan.q) + '" aria-label="Cari ' + LBL[lv] + '">' +
+      '<ul class="ap-list" id="addrList" role="listbox" aria-label="' + LBL[lv] + '">' + listHtml() + '</ul>';
+    if (hadFocus || pan.focus) { var qi = box.querySelector('#addrQ'); if (qi && (hadFocus || window.innerWidth >= 700)) { try { qi.focus({ preventScroll: true }); } catch (x) { /* abaikan */ } } pan.focus = false; }
+  }
+  function openPanel() {
+    st.pan.open = true; st.pan.q = ''; st.pan.level = firstEmpty(); st.pan.focus = true;
+    wilLoad(st.pan.level); renderPanel();
+    var b = root.querySelector('#addrPanel'); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function closePanel() { st.pan.open = false; renderPanel(); }
+  function pickAddr(id) {
+    var lv = st.pan.level, i = ORDER.indexOf(lv);
+    st.d[lv] = id; for (var j = i + 1; j < 4; j++) st.d[ORDER[j]] = '';
+    st.pan.q = ''; composeAlamat();
+    if (i < 3) { st.pan.level = ORDER[i + 1]; st.pan.focus = true; wilLoad(ORDER[i + 1]); }
+    else { st.pan.open = false; clearErr('alamat'); }
+    renderPanel(); updateSummary();
+  }
+  function backAddr(k) {
+    var i = ORDER.indexOf(k); for (var j = i; j < 4; j++) st.d[ORDER[j]] = '';
+    st.pan.level = k; st.pan.q = ''; st.pan.focus = true; composeAlamat(); wilLoad(k); renderPanel(); updateSummary();
   }
 
   // ---------- util ----------
   function fc(k) { return Object.assign({ tampil: true, wajib: true, label: '' }, ((pub && pub.fieldConfig) || {})[k] || {}); }
   function p() { return pub.pengaturan; }
-  function ageAtEvent(iso) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return null;
-    var b = iso.split('-').map(Number), r = String(p().tanggal_mulai).split('-').map(Number), a = r[0] - b[0];
-    if (r[1] < b[1] || (r[1] === b[1] && r[2] < b[2])) a--;
-    return a;
-  }
-  function validDate(iso) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return false;
-    var x = iso.split('-').map(Number), d = new Date(Date.UTC(x[0], x[1] - 1, x[2]));
-    return d.getUTCFullYear() === x[0] && d.getUTCMonth() === x[1] - 1 && d.getUTCDate() === x[2];
-  }
   function normWa(v) {
     var d = String(v || '').replace(/[^\d+]/g, '').replace(/^\+/, '');
     if (d.indexOf('62') === 0) d = '0' + d.slice(2); else if (d.charAt(0) === '8') d = '0' + d;
@@ -127,19 +134,12 @@
     var cd = U.countdown(p()), k = pub.kuota || {};
     return '<section class="reg-banner" aria-labelledby="h-reg"><div><div class="top"><span class="reg-ic">' + (U.safeUrl(p().logo_url) ? '<img src="' + esc(U.safeUrl(p().logo_url)) + '" alt="" referrerpolicy="no-referrer">' : U.icon('tent')) + '</span><div>' +
       '<div class="badges">' + S.regBadge(pub) + (pub.pendaftaran.status === 'buka' ? '<span class="badge badge-glass">Kuota tersisa ' + k.sisa + ' santri</span>' : '') + (cd ? '<span class="badge badge-glass">' + U.icon('clock') + ' ' + esc(cd.label) + '</span>' : '') + '</div>' +
-      '<h1 id="h-reg">Formulir Peserta ' + esc(p().nama_singkat) + '</h1>' +
-      '<p>' + esc(p().lokasi) + ', ' + esc(U.fmtRange(p().tanggal_mulai, p().tanggal_selesai)) + '. Lengkapi formulir bertahap di bawah untuk mencetak e-tiket &amp; QR registrasi santri.</p></div></div></div>' +
+      '<h1 id="h-reg">Pendaftaran ' + esc(p().nama_singkat) + '</h1>' +
+      '<p>' + esc(p().lokasi) + ', ' + esc(U.fmtRange(p().tanggal_mulai, p().tanggal_selesai)) + '. Isi satu formulir singkat di bawah, e-tiket &amp; QR langsung terbit.</p></div></div></div>' +
       '<span class="badge badge-glass safe">' + U.icon('lock') + ' Koneksi aman (HTTPS)</span></section>';
   }
-  function stepper() {
-    return '<nav class="stepper" aria-label="Langkah pendaftaran"><ol>' + STEPS.map(function (s, i) {
-      var n = i + 1, cls = n < st.step ? 'done' : n === st.step ? 'cur' : '';
-      return '<li class="' + cls + '"><button type="button" data-goto="' + n + '"' + (n < st.step ? '' : ' disabled') + (n === st.step ? ' aria-current="step"' : '') + '>' +
-        '<span class="dotc">' + U.icon(n < st.step ? 'check' : s.ic) + '</span><span class="st-lbl">' + n + '. ' + s.t + '</span></button></li>';
-    }).join('') + '</ol></nav>';
-  }
   function aside() {
-    return '<aside class="reg-aside" aria-label="Ringkasan"><section class="card sum-card" aria-labelledby="h-sum"><div class="sum-head"><h3 id="h-sum">' + U.icon('idcard') + ' Ringkasan Pendaftar</h3><span class="badge" id="sumStep"></span></div>' +
+    return '<aside class="reg-aside" aria-label="Ringkasan"><section class="card sum-card" aria-labelledby="h-sum"><div class="sum-head"><h3 id="h-sum">' + U.icon('idcard') + ' Ringkasan Pendaftar</h3><span class="badge">Draft</span></div>' +
       '<div id="sumBody"></div>' +
       '<ul class="checks"><li>' + U.icon('shield') + '<span>Pembayaran diverifikasi manual oleh panitia (transfer atau tunai).</span></li><li>' + U.icon('mail') + '<span>E-tiket QR terbit setelah formulir terkirim; konfirmasi dikirim lewat WhatsApp (dan email bila diisi).</span></li></ul></section>' +
       (p().kontak_wa ? '<div class="help-card"><span class="ic">' + U.icon('help') + '</span><span><b>Butuh Bantuan?</b><small>Hubungi panitia registrasi</small></span><a class="btn btn-soft" href="' + esc(S.waLink(p().kontak_wa, 'Assalamu\'alaikum, saya ingin bertanya tentang pendaftaran ' + p().nama_singkat)) + '" target="_blank" rel="noopener">Chat WA</a></div>' : '') +
@@ -154,13 +154,12 @@
 
   // ---------- ringkasan ----------
   function updateSummary() {
-    var d = st.d, a = ageAtEvent(d.tgl_lahir), z = size(), amt = parseInt(d.infaq, 10) || 0;
+    var d = st.d, z = size(), amt = parseInt(d.infaq, 10) || 0;
     var gl = d.gender === 'L' ? 'Ikhwan' : d.gender === 'P' ? 'Akhwat' : '';
-    var el = root.querySelector('#sumBody'); if (!el) return;
-    root.querySelector('#sumStep').textContent = 'Tahap ' + st.step + ' / 5';
-    el.innerHTML = '<div class="mini-ticket"><div class="mt-top"><span>' + esc(p().nama_singkat) + ' • ' + esc(String(p().lokasi).split(/[,&]/)[0].replace(/\s+$/, '')) + '</span><b>' + (st.step === 5 ? 'Siap dikirim' : 'Draft') + '</b></div>' +
+    var el = root && root.querySelector('#sumBody'); if (!el) return;
+    el.innerHTML = '<div class="mini-ticket"><div class="mt-top"><span>' + esc(p().nama_singkat) + ' • ' + esc(String(p().lokasi).split(/[,&]/)[0].replace(/\s+$/, '')) + '</span><b>Draft</b></div>' +
       '<div class="nm">' + esc(d.nama || 'Nama calon santri') + '</div>' +
-      '<div class="sub">' + (gl ? esc(gl) : '—') + (a != null && a >= 0 ? ' &bull; Usia ' + a + ' th' : '') + '</div>' +
+      '<div class="sub">' + [gl, d.jenjang].filter(Boolean).map(esc).join(' • ') + (gl || d.jenjang ? '' : '—') + '</div>' +
       '<div class="mt-grid"><div><small>Kaos peserta</small><b>' + (z ? esc(z.label) + ' (LD ' + esc(z.lebar) + ' × TB ' + esc(z.panjang) + ' cm)' : '—') + '</b></div>' +
       '<div><small>Infaq</small><b class="o">' + (amt ? U.rupiah(amt) : '—') + '</b></div></div></div>' +
       '<div class="rows"><div><span>Infaq operasional camp</span><span>' + U.rupiah(amt) + '</span></div><div><span>Biaya verifikasi sistem</span><span>Gratis (Rp0)</span></div>' +
@@ -181,122 +180,114 @@
   function group(id, lbl, req, inner) {
     return '<div class="field" data-f="' + id + '" role="radiogroup" aria-labelledby="' + id + '-l"><span class="lbl" id="' + id + '-l">' + lbl + (req ? ' <span class="req" aria-hidden="true">*</span>' : '') + '</span>' + inner + '<div class="err-msg" id="' + id + '-e" role="alert"></div></div>';
   }
+  function sec(key, no, title, sub, cls, inner) {
+    return '<section class="fsec ' + cls + '" data-sec="' + key + '"><header class="fsec-h"><span class="fsec-n">' + no + '</span><div><h2>' + title + '</h2>' + (sub ? '<p>' + sub + '</p>' : '') + '</div></header><div class="fsec-b">' + inner + '</div></section>';
+  }
+  function chips(name, items, cur) {
+    return '<div class="chips seg">' + items.map(function (it) {
+      return '<label class="chip"><input type="radio" name="' + name + '" value="' + it[0] + '"' + (cur === it[0] ? ' checked' : '') + '><span>' + it[1] + '</span></label>';
+    }).join('') + '</div>';
+  }
+  function alamatField() {
+    if (!fc('alamat').tampil) return '';
+    var lb = esc(label('alamat', 'Alamat Santri')), wj = fc('alamat').wajib;
+    if (W.fail) {
+      return '<div class="alert alert-warn">' + U.icon('alert') + '<span>Daftar wilayah belum bisa dimuat. Silakan ketik alamat lengkap. <small>(' + esc(String(W.err || '')) + ')</small></span></div>' +
+        fld('alamat', lb, '<textarea class="textarea" id="alamat" name="alamat" rows="2" maxlength="300" placeholder="Jalan, desa/kelurahan, kecamatan, kota, provinsi" aria-describedby="alamat-h alamat-e">' + esc(st.d.alamat) + '</textarea>', { req: wj, opt: !wj });
+    }
+    var t = addrText();
+    return '<div class="field addr" data-f="alamat"><span class="lbl" id="alamat-l">' + lb + (wj ? ' <span class="req" aria-hidden="true">*</span>' : ' <span class="opt">(opsional)</span>') + '</span>' +
+      '<button type="button" class="addr-btn' + (t ? ' has' : '') + (st.pan.open ? ' open' : '') + '" id="addrBtn" data-addr-toggle aria-haspopup="listbox" aria-expanded="' + (st.pan.open ? 'true' : 'false') + '" aria-labelledby="alamat-l">' +
+      U.icon('pin') + '<span class="addr-val">' + esc(t || 'Ketuk di sini untuk memilih alamat…') + '</span>' + U.icon('chevron-right') + '</button>' +
+      '<div class="addr-panel" id="addrPanel"' + (st.pan.open ? '' : ' hidden') + '></div>' +
+      '<div class="help" id="alamat-h">Pilih bertahap: Provinsi, lalu Kota/Kabupaten, Kecamatan, dan Desa/Kelurahan.</div><div class="err-msg" id="alamat-e" role="alert"></div></div>';
+  }
+  function buktiHtml() {
+    var b = st.bukti;
+    return '<label class="drop attn' + (b ? ' has-file' : '') + '" id="drop"><input type="file" id="buktiFile" accept="image/jpeg,image/png,image/webp,application/pdf" aria-describedby="bukti-h bukti-e">' +
+      '<span class="ic">' + (b && b.preview ? '<img src="' + esc(b.preview) + '" alt="Pratinjau bukti transfer">' : U.icon(b ? 'file' : 'upload')) + '</span>' +
+      '<span><b>' + (b ? esc(b.nama) : 'Ketuk di sini untuk mengunggah bukti transfer') + '</b><small>' + (b ? Math.max(1, Math.round(b.size / 1024)) + ' KB · siap dikirim' : 'Foto/screenshot JPG, PNG, WebP, atau PDF · maks. 4 MB') + '</small></span>' +
+      (b ? '<button type="button" class="btn btn-soft btn-sm remove" data-rm-bukti>' + U.icon('trash') + ' Hapus</button>' : '') + '</label>';
+  }
 
-  function stepHtml() {
+  // ---------- bagian-bagian formulir ----------
+  function secHtml(key) {
     var d = st.d, q, h = '';
-    if (st.step === 1) {
-      var a = ageAtEvent(d.tgl_lahir), umin = +p().usia_min, umax = +p().usia_maks;
-      h += '<div class="row">' + fld('nama', 'Nama Lengkap Calon Santri', txt('nama', 'Contoh: Muhammad Azzam Alfatih', { ac: 'off', max: 100 }), { req: true }) + '</div>';
-      var two = '';
-      if (fc('panggilan').tampil) two += fld('panggilan', esc(label('panggilan', 'Nama Panggilan di Camp')), txt('panggilan', 'Contoh: Azzam', { max: 40 }), { req: fc('panggilan').wajib, opt: !fc('panggilan').wajib });
-      if (fc('gender').tampil) two += group('gender', esc(label('gender', 'Jenis Kelamin')), fc('gender').wajib,
-        '<div class="chips seg"><label class="chip"><input type="radio" name="gender" value="L"' + (d.gender === 'L' ? ' checked' : '') + '><span>Ikhwan (L)</span></label><label class="chip"><input type="radio" name="gender" value="P"' + (d.gender === 'P' ? ' checked' : '') + '><span>Akhwat (P)</span></label></div>');
-      if (two) h += '<div class="row two">' + two + '</div>';
-      h += '<div class="row two">' + fld('tgl_lahir', 'Tanggal Lahir (usia ' + umin + '–' + umax + ' th)', '<input class="input" id="tgl_lahir" name="tgl_lahir" type="date" value="' + esc(d.tgl_lahir) + '" max="' + U.todayWib() + '" aria-describedby="tgl_lahir-h tgl_lahir-e">',
-        { req: true, help: '<span id="agePill">' + agePill(a) + '</span>' }) +
-        group('jenjang', 'Jenjang', true, '<div class="chips seg"><label class="chip"><input type="radio" name="jenjang" value="SD"' + (d.jenjang === 'SD' ? ' checked' : '') + '><span>SD</span></label><label class="chip"><input type="radio" name="jenjang" value="SMP"' + (d.jenjang === 'SMP' ? ' checked' : '') + '><span>SMP</span></label></div>') + '</div>';
-      if (fc('alamat').tampil && !W.fail) {
-        var wj = fc('alamat').wajib;
-        h += '<div class="row"><div class="alert alert-info">' + U.icon('info') + '<span>Alamat tempat tinggal santri: pilih dari daftar mulai dari provinsi sampai desa/kelurahan.</span></div></div>' +
-          '<div class="row two">' + wilSel('prov', 'Provinsi', 'Pilih provinsi') + wilSel('kota', 'Kota / Kabupaten', 'Pilih kota / kabupaten') + '</div>' +
-          '<div class="row two">' + wilSel('kec', 'Kecamatan', 'Pilih kecamatan') + wilSel('desa', 'Desa / Kelurahan', 'Pilih desa / kelurahan') + '</div>';
-      } else if (fc('alamat').tampil) h += (W.fail ? '<div class="row"><div class="alert alert-warn">' + U.icon('alert') + '<span>Daftar wilayah belum bisa dimuat. Silakan ketik alamat lengkap. <small>(' + esc(String(W.err || '')) + ')</small></span></div></div>' : '') + '<div class="row">' + fld('alamat', esc(label('alamat', 'Alamat Lengkap Santri')), '<textarea class="textarea" id="alamat" name="alamat" rows="2" maxlength="300" placeholder="Jalan, RT/RW, desa/kelurahan, kecamatan, kota, provinsi" aria-describedby="alamat-h alamat-e">' + esc(d.alamat) + '</textarea>', { req: fc('alamat').wajib, opt: !fc('alamat').wajib }) + '</div>';
-      if (fc('sekolah').tampil) h += '<div class="row">' + fld('sekolah', esc(label('sekolah', 'Asal Sekolah & Tingkat Kelas')), txt('sekolah', 'Contoh: SDIT Al-Ukhuwah / Kelas 5', { max: 120 }), { req: fc('sekolah').wajib, opt: !fc('sekolah').wajib }) + '</div>';
-    } else if (st.step === 2) {
-      h += '<div class="row">' + fld('wali', 'Nama Wali (Ayah/Ibu)', txt('wali', 'Contoh: Hendra Setiawan', { ac: 'name', max: 100 }), { req: true }) + '</div>' +
-        '<div class="row two">' + fld('wa', 'Nomor WhatsApp Aktif', txt('wa', 'Contoh: 0812 3456 7890', { type: 'tel', im: 'tel', ac: 'tel', max: 20 }), { req: true, help: 'Dipakai panitia menghubungi wali dan untuk menu Cek Pendaftaran.' }) +
-        fld('email', 'Alamat Email', txt('email', 'contoh@email.com', { type: 'email', im: 'email', ac: 'email', max: 120 }), { opt: true, help: 'Boleh dikosongkan. Bila diisi, e-tiket juga dikirim ke email ini; bila kosong, kabar dikirim lewat WhatsApp.' }) + '</div>' +
-        '<div class="alert alert-info">' + U.icon('info') + '<span>Satu formulir untuk satu anak. Bila mendaftarkan lebih dari satu anak, isi formulir lagi setelah selesai.</span></div>';
-    } else if (st.step === 3) {
+    if (key === 'santri') {
+      h = fld('nama', 'Nama Lengkap Calon Santri', txt('nama', 'Contoh: Muhammad Azzam Alfatih', { ac: 'off', max: 100 }), { req: true }) +
+        '<div class="row two">' + (fc('gender').tampil ? group('gender', esc(label('gender', 'Jenis Kelamin')), fc('gender').wajib, chips('gender', [['L', 'Ikhwan (L)'], ['P', 'Akhwat (P)']], d.gender)) : '') +
+        group('jenjang', 'Jenjang', true, chips('jenjang', [['SD', 'SD'], ['SMP', 'SMP']], d.jenjang)) + '</div>' + alamatField();
+      return sec('santri', 1, 'Data Santri', 'Nama, jenjang, dan alamat tempat tinggal.', 'c-santri', h);
+    }
+    if (key === 'kontak') {
+      h = '<div class="row two">' + fld('wa', 'Nomor WhatsApp Aktif', txt('wa', 'Contoh: 0812 3456 7890', { type: 'tel', im: 'tel', ac: 'tel', max: 20 }), { req: true }) +
+        fld('email', 'Email', txt('email', 'contoh@email.com', { type: 'email', im: 'email', ac: 'email', max: 120 }), { opt: true }) + '</div>' +
+        '<div class="help">Konfirmasi dan e-tiket dikirim ke WhatsApp. Email boleh dikosongkan.</div>';
+      return sec('kontak', 2, 'Kontak Wali', 'Hanya nomor WhatsApp yang wajib.', 'c-kontak', h);
+    }
+    if (key === 'kaos') {
       var us = ukuranUntuk(), jk = d.gender === 'P' ? 'Akhwat (perempuan)' : d.gender === 'L' ? 'Ikhwan (laki-laki)' : '';
-      h += (jk ? '<div class="alert alert-info">' + U.icon('shirt') + '<span>Kaos untuk <b>' + jk + '</b>. Model kaos Ikhwan dan Akhwat berbeda, jadi ukuran yang tampil sudah disesuaikan.</span></div>' : '') +
-        group('ukuran', 'Ukuran Kaos Lapangan' + (jk ? ' — ' + (d.gender === 'P' ? 'Akhwat' : 'Ikhwan') : ''), true, '<div class="tile-grid">' + us.map(function (u) {
-        return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.id) + '"' + (d.ukuran === u.id ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>LD ' + esc(u.lebar) + ' × TB ' + esc(u.panjang) + ' cm</small></span></label>';
-      }).join('') + '</div>') +
-        '<figure class="size-guide"><img src="assets/panduan-kaos.png" alt="Cara mengukur kaos: LD lebar dada, TB tinggi bahu" loading="lazy"><figcaption><b>LD</b> = Lebar Dada, <b>TB</b> = Tinggi Bahu (cm). Ukuran kaos <b>anak</b>. Ukur kaos yang biasa dipakai ananda lalu cocokkan, bila ragu pilih satu ukuran di atasnya.</figcaption></figure>';
-    } else if (st.step === 4) {
+      h = (jk ? '<div class="alert alert-info">' + U.icon('shirt') + '<span>Kaos untuk <b>' + jk + '</b>. Ukuran yang tampil sudah disesuaikan.</span></div>' : '<div class="alert alert-info">' + U.icon('shirt') + '<span>Pilih dulu <b>jenis kelamin</b> santri, ukuran kaos Ikhwan dan Akhwat berbeda.</span></div>') +
+        group('ukuran', 'Ukuran Kaos' + (jk ? ' — ' + (d.gender === 'P' ? 'Akhwat' : 'Ikhwan') : ''), true, '<div class="tile-grid">' + us.map(function (u) {
+          return '<label class="tile"><input type="radio" name="ukuran" value="' + esc(u.id) + '"' + (d.ukuran === u.id ? ' checked' : '') + '><span><b>' + esc(u.label) + '</b><small>LD ' + esc(u.lebar) + ' × TB ' + esc(u.panjang) + ' cm</small></span></label>';
+        }).join('') + '</div>') +
+        '<figure class="size-guide"><img src="assets/panduan-kaos.png" alt="Cara mengukur kaos: LD lebar dada, TB tinggi bahu" loading="lazy"><figcaption><b>LD</b> = Lebar Dada, <b>TB</b> = Tinggi Bahu (cm). Ukur kaos yang biasa dipakai ananda lalu cocokkan, bila ragu pilih satu ukuran di atasnya.</figcaption></figure>';
+      return sec('kaos', 3, 'Ukuran Kaos', 'Panduan ukuran ada di bawah pilihan.', 'c-kaos', h);
+    }
+    if (key === 'bayar') {
       q = quick();
       var cur = parseInt(d.infaq, 10) || 0, isQuick = q.indexOf(cur) >= 0;
-      h += group('amt', 'Nominal Infaq Operasional', true, '<div class="tile-grid">' + q.map(function (n) {
+      h = group('amt', 'Nominal Infaq', true, '<div class="tile-grid">' + q.map(function (n) {
         return '<label class="tile"><input type="radio" name="amt" value="' + n + '"' + (isQuick && cur === n ? ' checked' : '') + '><span><b>' + (n / 1000) + 'rb</b><small>' + U.rupiah(n) + '</small></span></label>';
       }).join('') + '</div>') +
         fld('infaq', 'Atau nominal lain', '<div class="input-affix"><span class="pre" aria-hidden="true">Rp</span><input class="input" id="infaq" name="infaq" inputmode="numeric" autocomplete="off" value="' + (isQuick || !cur ? '' : cur) + '" placeholder="Contoh: 175000" aria-describedby="infaq-h infaq-e"></div>',
           { help: 'Minimum ' + U.rupiah(minInfaq()) + '. Boleh lebih sebagai infaq sukarela. <span id="infaqFmt"></span>' }) +
-        group('cara', 'Cara Pembayaran', true, '<div class="chips seg"><label class="chip"><input type="radio" name="cara" value="transfer"' + (d.cara !== 'tunai' ? ' checked' : '') + '><span>Transfer sekarang</span></label><label class="chip"><input type="radio" name="cara" value="tunai"' + (d.cara === 'tunai' ? ' checked' : '') + '><span>Bayar tunai ke panitia</span></label></div>');
+        group('cara', 'Cara Pembayaran', true, chips('cara', [['transfer', 'Transfer sekarang'], ['tunai', 'Bayar tunai ke panitia']], d.cara === 'tunai' ? 'tunai' : 'transfer'));
       if (d.cara === 'tunai') {
-        h += '<div class="alert alert-info">' + U.icon('info') + '<span><b>Bayar tunai.</b> Infaq diserahkan langsung kepada panitia (tidak perlu bukti transfer). Pendaftaran Anda tercatat dengan status <b>Bayar Tunai</b> dan menjadi <b>Lunas</b> setelah panitia menerima pembayaran. Konfirmasi dan e-tiket dikirim lewat WhatsApp.</span></div>';
+        h += '<div class="alert alert-info">' + U.icon('info') + '<span><b>Bayar tunai.</b> Infaq diserahkan langsung kepada panitia, tidak perlu bukti transfer. Status pendaftaran <b>Bayar Tunai</b> dan menjadi <b>Lunas</b> setelah panitia menerima pembayaran.</span></div>';
       } else {
-        h += '<div><div class="lbl" style="margin-bottom:8px">Transfer ke rekening resmi</div>' + S.rekening(p(), { cls: 'rek-box' }) + '</div>' +
-          fld('bukti', 'Bukti Transfer', buktiHtml(), { req: true, help: 'Foto otomatis dikecilkan agar cepat terkirim. Bukti hanya dapat dilihat panitia.' });
+        h += '<div class="pay-box"><div class="pay-h">' + U.icon('bank') + ' Transfer ke rekening resmi</div>' + S.rekening(p(), { cls: 'rek-box' }) +
+          fld('bukti', 'Unggah Bukti Transfer', buktiHtml(), { req: true, help: 'Foto otomatis dikecilkan agar cepat terkirim. Bukti hanya dapat dilihat panitia.' }) + '</div>';
       }
-    } else {
-      var z = size(), amt = parseInt(d.infaq, 10) || 0, a2 = ageAtEvent(d.tgl_lahir);
-      function grp(title, goto, rows) {
-        return '<div class="review"><div style="align-items:center"><b>' + title + '</b><button type="button" class="review-edit" data-goto="' + goto + '">Ubah</button></div>' +
-          rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1] || '—') + '</dd></div>'; }).join('') + '</div>';
-      }
-      h += '<dl style="display:grid;gap:12px;margin:0">' +
-        grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
-        grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email || 'Tidak diisi (konfirmasi lewat WhatsApp)']]) +
-        grp('Kaos & infaq', 4, [['Kaos', z ? UN(z) + ' (LD ' + z.lebar + ' × TB ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Cara bayar', d.cara === 'tunai' ? 'Tunai ke panitia' : 'Transfer'], d.cara === 'tunai' ? ['Bukti transfer', 'Tidak diperlukan'] : ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
-        fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
-          { req: fc('medis').wajib, opt: !fc('medis').wajib, help: 'Membantu tim medis camp menyiapkan penanganan yang tepat.' }) +
-        '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
-        '<div id="submitErr" aria-live="assertive"></div>';
+      return sec('bayar', 4, 'Infaq &amp; Pembayaran', 'Pilih nominal, lalu cara membayar.', 'c-bayar', h);
     }
-    var nextLbl = ['Lanjut: Kontak Wali', 'Lanjut: Ukuran Kaos', 'Lanjut: Infaq', 'Lanjut: Persetujuan', 'Daftarkan &amp; Dapatkan E-Tiket'][st.step - 1];
-    return '<form id="regForm" novalidate><div class="step-no">Langkah ' + st.step + ' dari 5</div><h2 id="stepTitle" tabindex="-1">' +
-      ['Identitas Lengkap Calon Santri', 'Kontak Wali Santri', 'Ukuran Kaos Peserta', 'Infaq &amp; Bukti Transfer', 'Catatan Medis &amp; Persetujuan'][st.step - 1] + '</h2>' +
-      '<div class="form-body">' + h + '</div><div class="form-nav">' +
-      (st.step > 1 ? '<button type="button" class="btn btn-ghost btn-lg" data-prev>' + U.icon('arrow-left') + ' Kembali</button>' : '') +
-      '<button type="submit" class="btn btn-primary btn-lg"' + (st.sending ? ' disabled' : '') + '>' + nextLbl + ' ' + U.icon(st.step === 5 ? 'ticket' : 'arrow-right') + '</button></div></form>';
+    h = fld('medis', esc(label('medis', 'Catatan Alergi / Penyakit')), '<textarea class="textarea" id="medis" name="medis" rows="2" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan (kosongkan bila tidak ada)" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>', { opt: !fc('medis').wajib, req: fc('medis').wajib }) +
+      '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
+      '<div id="submitErr" aria-live="assertive"></div>' +
+      '<button type="submit" class="btn btn-primary btn-xl btn-block" id="btnDaftar"' + (st.sending ? ' disabled' : '') + '>Daftarkan &amp; Dapatkan E-Tiket ' + U.icon('ticket') + '</button>' +
+      '<p class="form-note">Satu formulir untuk satu anak. Untuk anak lain, isi formulir lagi setelah selesai.</p>';
+    return sec('akhir', 5, 'Kirim Pendaftaran', 'Periksa lagi, lalu tekan tombol daftar.', 'c-akhir', h);
   }
-  function agePill(a) {
-    if (a == null) return 'Usia dihitung pada hari acara (' + esc(U.fmtDate(p().tanggal_mulai)) + ').';
-    var ok = a >= +p().usia_min && a <= +p().usia_maks;
-    return '<span class="age-pill' + (ok ? '' : ' bad') + '">' + U.icon(ok ? 'check' : 'alert') + ' Usia pada hari acara: ' + a + ' tahun' + (ok ? '' : ' — di luar batas ' + esc(p().usia_min) + '–' + esc(p().usia_maks) + ' tahun') + '</span>';
+  function formHtml() {
+    return '<form id="regForm" novalidate>' + ['santri', 'kontak', 'kaos', 'bayar', 'akhir'].map(secHtml).join('') + '</form>';
   }
-  function buktiHtml() {
-    var b = st.bukti;
-    return '<label class="drop' + (b ? ' has-file' : '') + '" id="drop"><input type="file" id="buktiFile" accept="image/jpeg,image/png,image/webp,application/pdf" aria-describedby="bukti-h bukti-e">' +
-      '<span class="ic">' + (b && b.preview ? '<img src="' + esc(b.preview) + '" alt="Pratinjau bukti transfer">' : U.icon(b ? 'file' : 'upload')) + '</span>' +
-      '<span><b>' + (b ? esc(b.nama) : 'Pilih atau seret berkas bukti transfer') + '</b><small>' + (b ? Math.max(1, Math.round(b.size / 1024)) + ' KB · siap dikirim' : 'JPG, PNG, WebP, atau PDF · maks. 4 MB') + '</small></span>' +
-      (b ? '<button type="button" class="btn btn-soft btn-sm remove" data-rm-bukti>' + U.icon('trash') + ' Hapus</button>' : '') + '</label>';
+  function renderSec(key) {
+    var el = root && root.querySelector('[data-sec="' + key + '"]'); if (!el) return;
+    var tmp = document.createElement('div'); tmp.innerHTML = secHtml(key);
+    el.parentNode.replaceChild(tmp.firstChild, el);
+    if (key === 'santri') renderPanel();
+    if (key === 'bayar') updateInfaqFmt();
   }
 
   // ---------- validasi ----------
-  function validate(step) {
+  function validate() {
     var d = st.d, e = {};
-    if (step === 1) {
-      if (d.nama.trim().length < 3) e.nama = 'Nama lengkap santri wajib diisi.';
-      if (fc('panggilan').tampil && fc('panggilan').wajib && !d.panggilan.trim()) e.panggilan = 'Nama panggilan wajib diisi.';
-      if (fc('gender').tampil && fc('gender').wajib && !d.gender) e.gender = 'Pilih jenis kelamin.';
-      if (!validDate(d.tgl_lahir)) e.tgl_lahir = 'Isi tanggal lahir yang valid.';
-      else { var a = ageAtEvent(d.tgl_lahir); if (a < +p().usia_min || a > +p().usia_maks) e.tgl_lahir = 'Usia santri harus ' + p().usia_min + '–' + p().usia_maks + ' tahun pada hari acara.'; }
-      if (!d.jenjang) e.jenjang = 'Pilih jenjang SD atau SMP.';
-      if (fc('sekolah').tampil && fc('sekolah').wajib && !d.sekolah.trim()) e.sekolah = 'Asal sekolah wajib diisi.';
-      if (fcAlamatRol()) {
-        if (!d.prov) e.prov = 'Pilih provinsi.';
-        if (!d.kota) e.kota = 'Pilih kota atau kabupaten.';
-        if (!d.kec) e.kec = 'Pilih kecamatan.';
-        if (!d.desa) e.desa = 'Pilih desa atau kelurahan.';
-        composeAlamat();
-      } else if (fc('alamat').tampil && fc('alamat').wajib && !d.alamat.trim()) e.alamat = 'Alamat wajib diisi.';
-      else if (fc('alamat').tampil && d.alamat.trim() && d.alamat.trim().length < 8) e.alamat = 'Alamat terlalu singkat. Tuliskan alamat lengkap.';
-    } else if (step === 2) {
-      if (d.wali.trim().length < 3) e.wali = 'Nama wali wajib diisi.';
-      if (!/^0\d{8,13}$/.test(normWa(d.wa))) e.wa = 'Nomor WhatsApp tidak valid. Contoh: 081234567890.';
-      if (d.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) e.email = 'Alamat email tidak valid. Kosongkan bila tidak punya email.';
-    } else if (step === 3) {
-      if (!size()) e.ukuran = 'Pilih ukuran kaos.';
-    } else if (step === 4) {
-      var n = parseInt(d.infaq, 10);
-      if (!(n >= minInfaq())) e.infaq = 'Infaq minimal ' + U.rupiah(minInfaq()) + '.';
-      if (d.cara !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
-    } else if (step === 5) {
-      if (fc('medis').tampil && fc('medis').wajib && !d.medis.trim()) e.medis = 'Catatan medis wajib diisi (tulis "-" bila tidak ada).';
-      if (!d.setuju) e.setuju = 'Anda harus menyetujui ketentuan untuk melanjutkan.';
-    }
+    if (d.nama.trim().length < 3) e.nama = 'Nama lengkap santri wajib diisi.';
+    if (fc('gender').tampil && fc('gender').wajib && !d.gender) e.gender = 'Pilih jenis kelamin.';
+    if (!d.jenjang) e.jenjang = 'Pilih jenjang SD atau SMP.';
+    if (alamatAktif()) {
+      composeAlamat();
+      if (fc('alamat').wajib && !d.alamat) e.alamat = 'Pilih alamat sampai desa/kelurahan.';
+    } else if (fc('alamat').tampil && fc('alamat').wajib && !d.alamat.trim()) e.alamat = 'Alamat wajib diisi.';
+    else if (fc('alamat').tampil && d.alamat.trim() && d.alamat.trim().length < 8) e.alamat = 'Alamat terlalu singkat. Tuliskan alamat lengkap.';
+    if (!/^0\d{8,13}$/.test(normWa(d.wa))) e.wa = 'Nomor WhatsApp tidak valid. Contoh: 081234567890.';
+    if (d.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) e.email = 'Alamat email tidak valid. Kosongkan bila tidak punya email.';
+    if (!size()) e.ukuran = d.gender ? 'Pilih ukuran kaos.' : 'Pilih jenis kelamin dulu, lalu ukuran kaos.';
+    var n = parseInt(d.infaq, 10);
+    if (!(n >= minInfaq())) e.infaq = 'Infaq minimal ' + U.rupiah(minInfaq()) + '.';
+    if (d.cara !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
+    if (fc('medis').tampil && fc('medis').wajib && !d.medis.trim()) e.medis = 'Catatan medis wajib diisi (tulis "-" bila tidak ada).';
+    if (!d.setuju) e.setuju = 'Anda harus menyetujui ketentuan untuk melanjutkan.';
     return e;
   }
   function showErrors(e) {
@@ -307,48 +298,28 @@
       f.classList.add('invalid');
       var m = f.querySelector('.err-msg'); if (m) m.textContent = e[k];
       var inp = f.querySelector('input,textarea'); if (inp && inp.type !== 'radio' && inp.type !== 'file') inp.setAttribute('aria-invalid', 'true');
-      if (!first) first = f.querySelector('input:not([type=hidden]),textarea') || f;
+      if (!first) first = f;
     });
-    if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); try { first.focus({ preventScroll: true }); } catch (x) { /* abaikan */ } }
+    if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); var fi = first.querySelector('input:not([type=hidden]):not([type=radio]):not([type=file]),textarea,button.addr-btn'); if (fi) { try { fi.focus({ preventScroll: true }); } catch (x) { /* abaikan */ } } }
   }
   function clearErr(key) {
-    var f = root.querySelector('[data-f="' + key + '"]'); if (!f) return;
+    var f = root && root.querySelector('[data-f="' + key + '"]'); if (!f) return;
     f.classList.remove('invalid'); var m = f.querySelector('.err-msg'); if (m) m.textContent = '';
     var inp = f.querySelector('input,textarea'); if (inp) inp.removeAttribute('aria-invalid');
   }
 
   // ---------- render ----------
-  function renderStep(focus) {
-    var card = root.querySelector('#formCard'); if (!card) return;
-    card.innerHTML = stepHtml();
-    root.querySelector('.stepper').outerHTML = stepper();
-    updateSummary(); updateInfaqFmt();
-    if (st.step === 1) wilInit();
-    if (Object.keys(st.err).length) { var e = st.err; st.err = {}; showErrors(e); }
-    else if (focus) {
-      var t = root.querySelector('#stepTitle');
-      (root.querySelector('.reg-banner') || card).scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (t) t.focus({ preventScroll: true });
-    }
-  }
   function renderAll() {
     var open = pub.pendaftaran.status === 'buka';
-    root.innerHTML = '<div class="wrap">' + banner() + (open ? stepper() + '<div class="reg-grid"><section class="card form-card" id="formCard"></section>' + aside() + '</div>' : blocked()) + '</div>';
-    if (open) renderStep(false);
+    root.innerHTML = '<div class="wrap">' + banner() + (open ? '<div class="reg-grid"><section class="form-card one" id="formCard">' + formHtml() + '</section>' + aside() + '</div>' : blocked()) + '</div>';
+    if (open) { updateSummary(); updateInfaqFmt(); if (alamatAktif()) wilLoad('prov'); renderPanel(); }
   }
   function updateInfaqFmt() {
-    var el = root.querySelector('#infaqFmt'), n = parseInt(st.d.infaq, 10);
+    var el = root && root.querySelector('#infaqFmt'), n = parseInt(st.d.infaq, 10);
     if (el) el.textContent = n ? '= ' + U.rupiah(n) : '';
   }
 
-  // ---------- navigasi ----------
-  function goto(n) { st.step = n; renderStep(true); }
-  function next() {
-    var e = validate(st.step);
-    if (Object.keys(e).length) { showErrors(e); return; }
-    if (st.step < 5) goto(st.step + 1); else submit();
-  }
-
+  // ---------- berkas bukti ----------
   // ---------- berkas bukti ----------
   function toDataUrl(blob) {
     return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = function () { rej(new Error('baca')); }; r.readAsDataURL(blob); });
@@ -368,7 +339,7 @@
   }
   function takeFile(file) {
     var f = root.querySelector('[data-f="bukti"]');
-    function fail(msg) { st.bukti = null; renderStep(false); st.err = { bukti: msg }; showErrors(st.err); st.err = {}; }
+    function fail(msg) { st.bukti = null; renderSec('bayar'); showErrors({ bukti: msg }); }
     if (!file) return;
     var okType = /^(image\/(jpeg|png|webp)|application\/pdf)$/.test(file.type) || /\.(jpe?g|png|webp|pdf)$/i.test(file.name);
     if (!okType) return fail('Format berkas harus JPG, PNG, WebP, atau PDF.');
@@ -383,7 +354,7 @@
         if (st.bukti && st.bukti.preview) URL.revokeObjectURL(st.bukti.preview);
         var nm = file.name.replace(/\.[^.]*$/, '') + (isPdf ? '.pdf' : (blob === file ? file.name.match(/\.[^.]*$/) || '.jpg' : '.jpg'));
         st.bukti = { nama: String(nm), base64: data, size: blob.size, mime: blob.type, preview: isPdf ? '' : URL.createObjectURL(blob) };
-        renderStep(false); clearErr('bukti');
+        renderSec('bayar'); clearErr('bukti');
       });
     }).catch(function (err) {
       fail(err && err.message === 'big' || err && err.message === 'besar' ? 'Ukuran berkas maksimal 4 MB.' : 'Berkas tidak dapat dibaca. Gunakan foto JPG/PNG atau PDF.');
@@ -392,20 +363,21 @@
 
   // ---------- kirim ----------
   function submit() {
-    var all = {}, firstBad = 0;
-    for (var s = 1; s <= 5; s++) { var e = validate(s); if (Object.keys(e).length) { if (!firstBad) { firstBad = s; all = e; } } }
-    if (firstBad) { if (firstBad !== st.step) { st.err = all; goto(firstBad); } else showErrors(all); return; }
+    var e = validate();
+    if (Object.keys(e).length) { showErrors(e); return; }
     var d = st.d;
     var payload = {
-      nama: d.nama.trim(), panggilan: d.panggilan.trim(), gender: d.gender, tgl_lahir: d.tgl_lahir, jenjang: d.jenjang, sekolah: d.sekolah.trim(), alamat: (composeAlamat(), d.alamat.trim()),
-      wali: d.wali.trim(), wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), medis: d.medis.trim(),
+      nama: d.nama.trim(), gender: d.gender, jenjang: d.jenjang, alamat: (composeAlamat(), d.alamat.trim()),
+      wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), medis: d.medis.trim(),
       setuju: true, cara: d.cara === 'tunai' ? 'tunai' : 'transfer',
       bukti: d.cara === 'tunai' || !st.bukti ? null : { nama: st.bukti.nama, base64: st.bukti.base64 }
     };
-    st.sending = true; U.showBusy('Mengirim pendaftaran…', (st.d.cara === 'tunai' ? 'Mengirim data pendaftaran. ' : 'Mengunggah data dan bukti transfer. ') + 'Mohon jangan tutup halaman ini.');
-    var btn = root.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
+    st.sending = true; U.showBusy('Mengirim pendaftaran…', (d.cara === 'tunai' ? 'Mengirim data pendaftaran. ' : 'Mengunggah data dan bukti transfer. ') + 'Mohon jangan tutup halaman ini.');
+    var btn = root.querySelector('#btnDaftar'); if (btn) btn.disabled = true;
+    function reset() { st.sending = false; var b = root.querySelector('#btnDaftar'); if (b) b.disabled = false; }
+    function showBox(html) { var box = root.querySelector('#submitErr'); if (box) { box.innerHTML = html; box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
     A.post('register', payload, 90000).then(function (r) {
-      U.hideBusy(); st.sending = false;
+      U.hideBusy(); reset();
       if (r && r.success) {
         P.ticket.set(r.data);
         if (st.bukti && st.bukti.preview) URL.revokeObjectURL(st.bukti.preview);
@@ -416,21 +388,20 @@
       }
       var msg = (r && r.message) || 'Pendaftaran gagal. Silakan coba lagi.';
       if (r && (r.code === 'tutup' || r.code === 'penuh')) { A.refreshPublic().then(function () { }, function () { }); pub.pendaftaran = { status: r.code, pesan: msg }; detachGuard(); renderAll(); return; }
-      renderStep(false);
-      var box = root.querySelector('#submitErr');
-      if (box) box.innerHTML = '<div class="alert alert-err">' + U.icon('alert') + '<span>' + esc(msg) + (r && r.code === 'ganda' ? ' <a href="#/cek">Buka Cek Pendaftaran</a>' : '') + '</span></div>';
+      showBox('<div class="alert alert-err">' + U.icon('alert') + '<span>' + esc(msg) + (r && r.code === 'ganda' ? ' <a href="#/cek">Buka Cek Pendaftaran</a>' : '') + '</span></div>');
       U.toast(msg, 'err');
     }).catch(function (err) {
-      U.hideBusy(); st.sending = false; renderStep(false);
-      var box = root.querySelector('#submitErr');
-      if (box) box.innerHTML = '<div class="alert alert-warn">' + U.icon('alert') + '<span>' + esc(err.message || 'Koneksi terputus.') + ' <b>Data mungkin sudah tersimpan</b> — sebelum mengirim ulang, periksa email Anda atau buka <a href="#/cek">Cek Pendaftaran</a>. Bila belum ada, tekan tombol daftar sekali lagi.</span></div>';
+      U.hideBusy(); reset();
+      showBox('<div class="alert alert-warn">' + U.icon('alert') + '<span>' + esc(err.message || 'Koneksi terputus.') + ' <b>Data mungkin sudah tersimpan</b> — sebelum mengirim ulang, buka <a href="#/cek">Cek Pendaftaran</a>. Bila belum ada, tekan tombol daftar sekali lagi.</span></div>');
       U.toast('Pengiriman terputus. Lihat keterangan di bawah.', 'err');
     });
   }
 
   // ---------- event ----------
   function onInput(e) {
-    var t = e.target, n = t.name; if (!n) return;
+    var t = e.target;
+    if (t.id === 'addrQ') { if (e.type !== 'input') return; st.pan.q = t.value; var ul = root.querySelector('#addrList'); if (ul) ul.innerHTML = listHtml(); return; }
+    var n = t.name; if (!n) return;
     if (n === 'amt') { st.d.infaq = t.value; var c = root.querySelector('#infaq'); if (c) c.value = ''; clearErr('amt'); clearErr('infaq'); updateSummary(); updateInfaqFmt(); return; }
     if (n === 'infaq') {
       var digits = t.value.replace(/\D/g, '').slice(0, 9); if (digits !== t.value) t.value = digits;
@@ -440,19 +411,21 @@
     if (!(n in st.d)) return;
     st.d[n] = t.type === 'checkbox' ? t.checked : t.value;
     clearErr(n);
-    if (n === 'tgl_lahir') { var pill = root.querySelector('#agePill'); if (pill) pill.innerHTML = agePill(ageAtEvent(t.value)); }
-    if (n === 'gender') { var zz = size(); if (zz && zz.untuk && zz.untuk !== st.d.gender) st.d.ukuran = ''; }
-    if (n === 'cara') { renderStep(false); return; }
-    if (n === 'prov' || n === 'kota' || n === 'kec') wilChange(n); else if (n === 'desa') composeAlamat();
+    if (n === 'gender') { var zz = size(); if (zz && zz.untuk && zz.untuk !== st.d.gender) st.d.ukuran = ''; clearErr('ukuran'); renderSec('kaos'); }
+    if (n === 'cara') { renderSec('bayar'); }
     updateSummary();
   }
   function onClick(e) {
-    var g = e.target.closest('[data-goto]'); if (g && !g.disabled) { e.preventDefault(); goto(parseInt(g.getAttribute('data-goto'), 10)); return; }
-    if (e.target.closest('[data-prev]')) { goto(st.step - 1); return; }
+    var tg = e.target.closest('[data-addr-toggle]'); if (tg) { e.preventDefault(); if (st.pan.open) closePanel(); else openPanel(); return; }
+    var pk = e.target.closest('[data-addr-pick]'); if (pk) { e.preventDefault(); pickAddr(pk.getAttribute('data-addr-pick')); return; }
+    var bk = e.target.closest('[data-addr-back]'); if (bk) { e.preventDefault(); backAddr(bk.getAttribute('data-addr-back')); return; }
+    if (e.target.closest('[data-addr-close]')) { e.preventDefault(); closePanel(); return; }
     var rm = e.target.closest('[data-rm-bukti]');
-    if (rm) { e.preventDefault(); e.stopPropagation(); if (st.bukti && st.bukti.preview) URL.revokeObjectURL(st.bukti.preview); st.bukti = null; renderStep(false); }
+    if (rm) { e.preventDefault(); e.stopPropagation(); if (st.bukti && st.bukti.preview) URL.revokeObjectURL(st.bukti.preview); st.bukti = null; renderSec('bayar'); return; }
+    if (st.pan.open && !e.target.closest('.addr')) closePanel();
   }
-  function onSubmit(e) { if (e.target.id === 'regForm') { e.preventDefault(); if (!st.sending) next(); } }
+  function onKey(e) { if (e.key === 'Escape' && st.pan.open) { closePanel(); var b = root.querySelector('#addrBtn'); if (b) b.focus(); } }
+  function onSubmit(e) { if (e.target.id === 'regForm') { e.preventDefault(); if (!st.sending) submit(); } }
   function onFile(e) { if (e.target.id === 'buktiFile') takeFile(e.target.files && e.target.files[0]); }
   function onDrag(e) {
     var d = e.target.closest && e.target.closest('#drop'); if (!d) return;
@@ -462,14 +435,14 @@
   }
   function attachGuard() {
     if (guard) return;
-    guard = function (e) { if (st.sending || st.step > 1 || st.d.nama || st.d.wali) { e.preventDefault(); e.returnValue = ''; } };
+    guard = function (e) { if (st.sending || st.d.nama || st.d.wa) { e.preventDefault(); e.returnValue = ''; } };
     window.addEventListener('beforeunload', guard);
   }
   function detachGuard() { if (guard) { window.removeEventListener('beforeunload', guard); guard = null; } }
 
   var handlers = [];
   function bind(el) {
-    [['input', onInput], ['change', onInput], ['click', onClick], ['submit', onSubmit], ['change', onFile], ['dragover', onDrag], ['dragenter', onDrag], ['dragleave', onDrag], ['drop', onDrag]].forEach(function (h) {
+    [['input', onInput], ['change', onInput], ['click', onClick], ['keydown', onKey], ['submit', onSubmit], ['change', onFile], ['dragover', onDrag], ['dragenter', onDrag], ['dragleave', onDrag], ['drop', onDrag]].forEach(function (h) {
       el.addEventListener(h[0], h[1]); handlers.push([el, h[0], h[1]]);
     });
   }

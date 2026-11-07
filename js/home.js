@@ -25,17 +25,17 @@
         '<div class="hero-meta">' +
           '<span class="badge">' + U.icon('calendar') + ' ' + U.esc(U.fmtRange(p.tanggal_mulai, p.tanggal_selesai)) + '</span>' +
           '<span class="badge">' + U.icon('pin') + ' ' + U.esc(p.lokasi) + '</span>' +
-          '<span class="badge">' + U.icon('users') + ' Usia ' + U.esc(p.usia_min) + ' – ' + U.esc(p.usia_maks) + ' tahun</span>' +
+          '<span class="badge">' + U.icon('users') + ' Jenjang SD &amp; SMP</span>' +
         '</div>' +
         '<div class="hero-cta">' +
           (open ? '<a class="btn btn-primary btn-lg" href="#/daftar">Daftar Santri Sekarang ' + U.icon('arrow-right') + '</a>'
                 : '<a class="btn btn-primary btn-lg" href="#/cek">Cek Status Pendaftaran ' + U.icon('search') + '</a>') +
           (p.kontak_wa && open ? '<a class="btn btn-on-navy btn-lg btn-admin-reg" target="_blank" rel="noopener" href="' + U.esc(S.waLink(p.kontak_wa, ['Assalamu\'alaikum, kami kesulitan mendaftar lewat website ' + (p.nama_singkat || 'PASA') + '. Mohon bantuan pendaftaran ananda. Berikut data kami:', '',
-            'DATA SANTRI', '1. Nama lengkap:', '2. Nama panggilan:', '3. Jenis kelamin (Ikhwan/Akhwat):', '4. Tanggal lahir (tgl-bulan-tahun):', '5. Jenjang (SD/SMP):',
-            '6. Asal sekolah & kelas:', '7. Alamat: provinsi, kota/kabupaten, kecamatan, desa/kelurahan:', '',
-            'DATA WALI', '8. Nama wali (ayah/ibu):', '9. Nomor WhatsApp aktif:', '10. Email (boleh dikosongkan):', '',
-            'KAOS & INFAQ', '11. Ukuran kaos:', '12. Nominal infaq (minimal ' + U.rupiah(parseInt(p.infaq_min, 10) || 0) + '):', '13. Cara bayar: transfer (kirim foto bukti di chat ini) atau tunai ke panitia', '',
-            'LAINNYA', '14. Alergi / kondisi kesehatan ananda (tulis "-" bila tidak ada):', '15. Setuju dengan syarat & ketentuan acara (ya/tidak):', '',
+            'DATA SANTRI', '1. Nama lengkap:', '2. Jenis kelamin (Ikhwan/Akhwat):', '3. Jenjang (SD/SMP):',
+            '4. Alamat: provinsi, kota/kabupaten, kecamatan, desa/kelurahan:', '',
+            'KONTAK', '5. Nomor WhatsApp aktif:', '6. Email (boleh dikosongkan):', '',
+            'KAOS & INFAQ', '7. Ukuran kaos:', '8. Nominal infaq (minimal ' + U.rupiah(parseInt(p.infaq_min, 10) || 0) + '):', '9. Cara bayar: transfer (kirim foto bukti di chat ini) atau tunai ke panitia', '',
+            'LAINNYA', '10. Alergi / kondisi kesehatan ananda (tulis "-" bila tidak ada):', '11. Setuju dengan syarat & ketentuan acara (ya/tidak):', '',
             'Jazakumullahu khairan.'].join('\n'))) + '">' + U.icon('help') + ' Daftar Lewat Admin</a>' : '') +
           '<button type="button" class="btn btn-on-navy btn-lg" data-scroll="kegiatan">Pelajari Kegiatan</button>' +
         '</div>' +

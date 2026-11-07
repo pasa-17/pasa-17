@@ -64,7 +64,7 @@
       x.fillStyle = '#0D1B2A'; x.font = '800 64px ' + F; x.fillText(t.kode, W / 2, 1004);
       x.font = '800 38px ' + F; var used = wrap(x, t.nama, W / 2, 1066, W - 220, 46, 2);
       var y2 = 1066 + used + 6; x.fillStyle = '#5A6472'; x.font = '500 26px ' + F;
-      x.fillText([gl(t.gender), t.usia ? 'Usia ' + t.usia + ' th' : '', t.ukuran ? 'Kaos ' + t.ukuran : ''].filter(Boolean).join('  ·  '), W / 2, y2 + 8);
+      x.fillText([gl(t.gender), t.jenjang ? t.jenjang : (t.usia ? 'Usia ' + t.usia + ' th' : ''), t.ukuran ? 'Kaos ' + t.ukuran : ''].filter(Boolean).join('  ·  '), W / 2, y2 + 8);
       // status
       var stc = t.statusInfaq === 'Lunas' ? ['#E3EDE3', '#2C4E30'] : t.statusInfaq === 'Bukti Ditolak' ? ['#FFDAD6', '#93000A'] : ['#FFE9DB', '#A33E00'];
       x.font = '800 24px ' + F; var lbl = t.statusInfaq === 'Lunas' ? 'LUNAS · TERVERIFIKASI' : String(t.statusInfaq).toUpperCase(); var bw = x.measureText(lbl).width + 56;
@@ -111,7 +111,7 @@
       '<div class="pt-name">' + esc(U.fmtRange(t.acara.mulai, t.acara.selesai)) + ' · ' + esc(String(t.acara.lokasi).split(',')[0]) + '</div></div><div class="pass-tear"></div>' +
       '<div class="pass-body"><div class="qr-box" id="qrBox" aria-label="QR check-in">' + P.qr.svg(t.qr, { margin: 2, label: 'QR check-in ' + t.kode }) + '</div>' +
       '<div><div class="kode-lbl">Kode tiket</div><div class="kode">' + esc(t.kode) + '</div></div>' +
-      '<div><div class="nm">' + esc(t.nama) + '</div><div class="sub">' + esc([gl(t.gender), t.usia ? 'Usia ' + t.usia + ' th' : '', t.panggilan ? 'Panggilan ' + t.panggilan : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<div><div class="nm">' + esc(t.nama) + '</div><div class="sub">' + esc([gl(t.gender), t.jenjang ? t.jenjang : (t.usia ? 'Usia ' + t.usia + ' th' : ''), t.panggilan ? 'Panggilan ' + t.panggilan : ''].filter(Boolean).join(' · ')) + '</div></div>' +
       S.statusBadge(st) +
       '<div class="pass-grid"><div><small>Wali</small><b>' + esc(t.wali) + '</b></div><div><small>Ukuran kaos</small><b>' + esc(t.ukuran) + '</b></div>' +
       '<div><small>Infaq</small><b>' + U.rupiah(t.infaq) + '</b></div><div><small>Terdaftar</small><b>' + esc(U.fmtDate(String(t.dibuat).slice(0, 10))) + '</b></div>' +

@@ -179,7 +179,7 @@
           '<label class="pk"><input type="checkbox" data-sel aria-label="Pilih ' + h(p.nama) + '"' + (sel[p.id] ? ' checked' : '') + '></label>' +
           '<div class="c-id"><span class="code">' + h(p.kode) + '</span></div>' +
           '<div class="c-name"><span class="av ' + (p.gender === 'P' ? 'f' : 'm') + '">' + h(U.initials(p.nama)) + '</span><div><b>' + h(p.nama) + '</b><small>' + (p.gender === 'P' ? 'Perempuan' : p.gender === 'L' ? 'Laki-laki' : '') + ' · ' + h(p.jenjang) + (p.sekolah ? ' · ' + h(p.sekolah) : '') + '</small></div></div>' +
-          '<div class="c-age"><b>' + h(p.usia) + ' th</b></div>' +
+          '<div class="c-age"><b>' + h(p.jenjang || (p.usia ? p.usia + ' th' : '—')) + '</b></div>' +
           '<div class="c-wali"><b>' + h(p.wali) + '</b><a href="' + h(M.waLink(p.wa)) + '" target="_blank" rel="noopener">' + h(p.wa) + '</a></div>' +
           '<div class="c-size"><span class="size-tag">' + h(p.ukuran) + '</span></div>' +
           '<div class="c-amt"><b>' + U.rupiah(p.infaq) + '</b><small>' + (p.metodeBayar ? h(p.metodeBayar) + ' · ' : '') + h(M.fmtTime(p.dibuat)) + '</small></div>' +
@@ -306,11 +306,11 @@
         M.fieldHtml('f_nama', 'Nama lengkap santri', { value: p.nama, req: 1, cls: 'span2' }) +
         M.fieldHtml('f_panggilan', 'Nama panggilan', { value: p.panggilan }) +
         '<div class="field"><label class="lbl" for="f_gender">Jenis kelamin</label><select class="select" id="f_gender"><option value="L"' + (p.gender === 'L' ? ' selected' : '') + '>Laki-laki</option><option value="P"' + (p.gender === 'P' ? ' selected' : '') + '>Perempuan</option></select></div>' +
-        M.fieldHtml('f_tgl', 'Tanggal lahir', { type: 'date', value: p.tglLahir, req: 1 }) +
+        M.fieldHtml('f_tgl', 'Tanggal lahir (opsional)', { type: 'date', value: p.tglLahir }) +
         '<div class="field"><label class="lbl" for="f_jenjang">Jenjang</label><select class="select" id="f_jenjang"><option value="SD"' + (p.jenjang !== 'SMP' ? ' selected' : '') + '>SD</option><option value="SMP"' + (p.jenjang === 'SMP' ? ' selected' : '') + '>SMP</option></select></div>' +
         M.fieldHtml('f_sekolah', 'Asal sekolah & kelas', { value: p.sekolah, cls: 'span2' }) +
         M.fieldHtml('f_alamat', 'Alamat lengkap santri', { type: 'textarea', rows: 2, value: p.alamat, cls: 'span2' }) +
-        M.fieldHtml('f_wali', 'Nama wali', { value: p.wali, req: 1 }) +
+        M.fieldHtml('f_wali', 'Nama wali (opsional)', { value: p.wali }) +
         M.fieldHtml('f_wa', 'WhatsApp wali', { value: p.wa, req: 1, type: 'tel' }) +
         M.fieldHtml('f_email', 'Email wali (opsional)', { value: p.email, type: 'email', cls: 'span2' }) +
         '<div class="field"><label class="lbl" for="f_ukuran">Ukuran kaos</label><select class="select" id="f_ukuran">' + ukr.map(function (u) { return '<option value="' + h(UN(u)) + '"' + (UN(u) === p.ukuran ? ' selected' : '') + '>' + h(UN(u)) + ' (' + h(u.lebar) + '×' + h(u.panjang) + ' cm)</option>'; }).join('') + '</select></div>' +

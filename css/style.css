@@ -872,3 +872,67 @@ main { display: block; min-height: 60vh; outline: 0; }
 .size-guide{margin:16px 0 0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;border:1px solid var(--line,#e5e2da);border-radius:16px;background:rgba(127,127,127,.06)}
 .size-guide img{width:100%;max-width:230px;height:auto;display:block}
 .size-guide figcaption{font-size:13px;line-height:1.5;text-align:center;opacity:.85}
+
+/* ===== Formulir pendaftaran satu halaman: kolom besar, tiap bagian beda warna ===== */
+.form-card.one { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.form-card.one form { display: grid; gap: 20px; }
+.fsec { --sc: #1D5FD6; border-radius: 26px; border: 2px solid color-mix(in srgb, var(--sc) 30%, var(--line-strong)); background: color-mix(in srgb, var(--sc) 6%, var(--surface)); overflow: hidden; }
+.fsec-h { display: flex; gap: 14px; align-items: center; padding: 16px 22px; background: var(--sc); color: #fff; }
+.fsec-n { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--sc); display: grid; place-items: center; font-weight: 800; font-size: 17px; flex: none; }
+.fsec-h h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.01em; color: #fff; line-height: 1.2; }
+.fsec-h p { margin: 3px 0 0; font-size: 13.5px; color: rgba(255, 255, 255, .88); }
+.fsec-b { padding: 22px 20px 24px; display: grid; gap: 20px; }
+@media (min-width: 640px) { .fsec-b { padding: 28px 30px 30px; } }
+.c-santri { --sc: #1D5FD6; } .c-kontak { --sc: #0E8F6E; } .c-kaos { --sc: #7A3FE0; } .c-bayar { --sc: #E85D04; } .c-akhir { --sc: #0D1B2A; }
+[data-theme="dark"] .c-akhir { --sc: #2B4A6B; }
+.fsec .lbl { font-size: 16px; font-weight: 700; }
+.fsec .input, .fsec .select { height: 62px; font-size: 18px; padding: 0 26px; border-width: 2px; border-color: color-mix(in srgb, var(--sc) 40%, var(--line-strong)); }
+.fsec .input-affix .input { padding-left: 58px; }
+.fsec .textarea { min-height: 96px; font-size: 18px; padding: 16px 26px; border-width: 2px; border-radius: 26px; border-color: color-mix(in srgb, var(--sc) 40%, var(--line-strong)); }
+.fsec .input:focus, .fsec .textarea:focus { border-color: var(--sc); }
+.fsec .chip > span { min-height: 60px; font-size: 18px; font-weight: 700; padding: 0 22px; border-width: 2px; }
+.fsec .chip input:checked + span { background: var(--sc); border-color: var(--sc); color: #fff; }
+.fsec .tile > span { min-height: 80px; border-width: 2px; }
+.fsec .tile input:checked + span { border-color: var(--sc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 30%, transparent); }
+.fsec .help { font-size: 13.5px; }
+.fsec .check { font-size: 15.5px; }
+
+/* alamat: satu kolom, pilihan muncul bertahap */
+.addr-btn { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 10px 22px; border-radius: 31px; border: 2px solid var(--sc); background: var(--surface); color: var(--muted); font: inherit; font-size: 18px; text-align: left; cursor: pointer; }
+.addr-btn.has { color: var(--ink); font-weight: 600; }
+.addr-btn .addr-val { flex: 1; line-height: 1.35; }
+.addr-btn > svg { flex: none; color: var(--sc); }
+.addr-btn > svg:last-child { transform: rotate(90deg); transition: transform .2s; }
+.addr-btn.open > svg:last-child { transform: rotate(-90deg); }
+.addr-btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--sc); }
+.addr-panel { border: 2px solid var(--sc); border-radius: 22px; background: var(--surface); padding: 14px; display: grid; gap: 10px; box-shadow: 0 14px 34px rgba(13, 27, 42, .16); }
+.addr-panel[hidden] { display: none; }
+.ap-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 17px; }
+.ap-top small { color: var(--muted); font-weight: 500; }
+.ap-x { border: 0; background: var(--surface-2); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; color: var(--ink); }
+.ap-crumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--muted); }
+.crumb { border: 0; background: color-mix(in srgb, var(--sc) 15%, transparent); color: var(--ink); padding: 7px 13px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.fsec .ap-q { height: 54px; font-size: 17px; }
+.ap-list { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; display: grid; gap: 4px; -webkit-overflow-scrolling: touch; }
+.ap-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 15px 16px; border: 0; border-radius: 14px; background: transparent; font: inherit; font-size: 17px; color: var(--ink); text-align: left; cursor: pointer; }
+.ap-item:hover, .ap-item:focus-visible, .ap-item.on { background: color-mix(in srgb, var(--sc) 14%, transparent); outline: 0; }
+.ap-item svg { width: 18px; height: 18px; opacity: .45; flex: none; }
+.ap-empty { padding: 18px; color: var(--muted); text-align: center; }
+.field.invalid .addr-btn { border-color: var(--err); }
+
+/* pembayaran: bukti transfer dibuat mencolok */
+.pay-box { border: 2px solid #E85D04; background: color-mix(in srgb, #E85D04 8%, var(--surface)); border-radius: 22px; padding: 18px; display: grid; gap: 18px; }
+.pay-h { font-weight: 800; font-size: 17px; display: flex; gap: 8px; align-items: center; color: var(--brand-ink); }
+.drop.attn { border: 3px dashed #E85D04; background: color-mix(in srgb, #E85D04 13%, var(--surface)); padding: 24px 20px; animation: attn 2.2s ease-in-out infinite; }
+.drop.attn .ic { background: #E85D04; color: #fff; width: 62px; height: 62px; }
+.drop.attn b { font-size: 17px; }
+.drop.attn.has-file { animation: none; border-style: solid; border-color: var(--sage); background: var(--sage-soft); }
+.drop.attn.has-file .ic { background: var(--surface-2); color: var(--brand-ink); }
+@keyframes attn { 0%, 100% { transform: translateY(0); box-shadow: 0 0 0 0 rgba(232, 93, 4, .45); } 50% { transform: translateY(-5px); box-shadow: 0 0 0 11px rgba(232, 93, 4, 0); } }
+@media (prefers-reduced-motion: reduce) { .drop.attn { animation: none; } }
+
+/* tombol kirim besar */
+.btn-xl { min-height: 70px; font-size: 21px; font-weight: 800; padding: 0 34px; box-shadow: 0 12px 26px rgba(232, 93, 4, .34); }
+.btn-xl svg { width: 24px; height: 24px; }
+.form-note { margin: 0; text-align: center; font-size: 13.5px; color: var(--muted); }
+.field.invalid .addr-panel .input { border-color: var(--line-strong); }
