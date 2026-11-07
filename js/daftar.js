@@ -252,7 +252,7 @@
       return sec('bayar', 4, 'Infaq &amp; Pembayaran', 'Pilih nominal, lalu cara membayar.', 'c-bayar', h);
     }
     h = fld('medis', esc(label('medis', 'Catatan Alergi / Penyakit')), '<textarea class="textarea" id="medis" name="medis" rows="2" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan (kosongkan bila tidak ada)" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>', { opt: !fc('medis').wajib, req: fc('medis').wajib }) +
-      '<div class="field" data-f="setuju"><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
+      '<div class="field consent" data-f="setuju"><div class="consent-h">' + U.icon('shield') + ' Persetujuan (wajib dicentang)</div><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
       '<div id="submitErr" aria-live="assertive"></div>' +
       '<button type="submit" class="btn btn-primary btn-xl btn-block" id="btnDaftar"' + (st.sending ? ' disabled' : '') + '>Daftarkan &amp; Dapatkan E-Tiket ' + U.icon('ticket') + '</button>' +
       '<p class="form-note">Satu formulir untuk satu anak. Untuk anak lain, isi formulir lagi setelah selesai.</p>';

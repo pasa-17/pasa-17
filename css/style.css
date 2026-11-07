@@ -936,3 +936,20 @@ main { display: block; min-height: 60vh; outline: 0; }
 .btn-xl svg { width: 24px; height: 24px; }
 .form-note { margin: 0; text-align: center; font-size: 13.5px; color: var(--muted); }
 .field.invalid .addr-panel .input { border-color: var(--line-strong); }
+
+/* persetujuan: dibuat jelas terlihat */
+.consent { padding: 18px; border-radius: 20px; border: 2.5px solid #E85D04; background: color-mix(in srgb, #E85D04 10%, var(--surface)); gap: 12px; }
+.consent-h { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--brand-ink); text-transform: uppercase; letter-spacing: .04em; }
+.consent .check { font-size: 17px; line-height: 1.5; font-weight: 600; align-items: flex-start; gap: 14px; }
+.consent .check input { width: 30px; height: 30px; flex: none; accent-color: #E85D04; border-width: 2.5px; border-color: #E85D04; }
+.consent .check a { color: var(--brand-ink); font-weight: 800; text-decoration: underline; }
+.field.consent.invalid { border-color: var(--err); background: color-mix(in srgb, var(--err) 8%, var(--surface)); }
+
+/* tombol daftar: bergerak agar menarik perhatian */
+#btnDaftar { position: relative; overflow: hidden; animation: daftarPulse 1.8s ease-in-out infinite; }
+#btnDaftar::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent); transform: skewX(-20deg); animation: daftarShine 2.6s ease-in-out infinite; pointer-events: none; }
+#btnDaftar:disabled { animation: none; }
+#btnDaftar:disabled::after { display: none; }
+@keyframes daftarPulse { 0%, 100% { transform: scale(1); box-shadow: 0 12px 26px rgba(232, 93, 4, .34), 0 0 0 0 rgba(232, 93, 4, .5); } 50% { transform: scale(1.03); box-shadow: 0 16px 32px rgba(232, 93, 4, .45), 0 0 0 14px rgba(232, 93, 4, 0); } }
+@keyframes daftarShine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) { #btnDaftar, #btnDaftar::after { animation: none; } }

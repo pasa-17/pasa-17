@@ -304,7 +304,6 @@
       var m = U.openModal({ title: edit ? 'Ubah data ' + p.kode : 'Tambah peserta manual', cls: 'wide', html:
         '<form id="pf" novalidate><div class="form-grid">' +
         M.fieldHtml('f_nama', 'Nama lengkap santri', { value: p.nama, req: 1, cls: 'span2' }) +
-        M.fieldHtml('f_panggilan', 'Nama panggilan', { value: p.panggilan }) +
         '<div class="field"><label class="lbl" for="f_gender">Jenis kelamin</label><select class="select" id="f_gender"><option value="L"' + (p.gender === 'L' ? ' selected' : '') + '>Laki-laki</option><option value="P"' + (p.gender === 'P' ? ' selected' : '') + '>Perempuan</option></select></div>' +
         M.fieldHtml('f_tgl', 'Tanggal lahir (opsional)', { type: 'date', value: p.tglLahir }) +
         '<div class="field"><label class="lbl" for="f_jenjang">Jenjang</label><select class="select" id="f_jenjang"><option value="SD"' + (p.jenjang !== 'SMP' ? ' selected' : '') + '>SD</option><option value="SMP"' + (p.jenjang === 'SMP' ? ' selected' : '') + '>SMP</option></select></div>' +
@@ -326,7 +325,7 @@
       f.addEventListener('submit', function (ev) {
         ev.preventDefault();
         var v = function (id) { return M.val(m.body, id).trim(); };
-        var d = { nama: v('f_nama'), panggilan: v('f_panggilan'), gender: v('f_gender'), jenjang: v('f_jenjang'), sekolah: v('f_sekolah'), alamat: v('f_alamat'), wali: v('f_wali'), wa: v('f_wa'), email: v('f_email'),
+        var d = { nama: v('f_nama'), gender: v('f_gender'), jenjang: v('f_jenjang'), sekolah: v('f_sekolah'), alamat: v('f_alamat'), wali: v('f_wali'), wa: v('f_wa'), email: v('f_email'),
           ukuran: v('f_ukuran'), infaq: v('f_infaq'), medis: v('f_medis'), metodeBayar: v('f_metode'), catatanPanitia: v('f_cat') };
         var btn = m.body.querySelector('#pfOk'); M.spinBtn(btn, true, 'Menyimpan…');
         var call;
@@ -336,7 +335,7 @@
           M.spinBtn(btn, false);
           if (!r) return;
           m.close();
-          if (edit) M.store.patch([p.id], { nama: d.nama, panggilan: d.panggilan, gender: d.gender, jenjang: d.jenjang, sekolah: d.sekolah, alamat: d.alamat, wali: d.wali, wa: d.wa, email: d.email, ukuran: d.ukuran, infaq: Number(d.infaq) || 0, medis: d.medis, metodeBayar: d.metodeBayar, catatanPanitia: d.catatanPanitia, tglLahir: d.tglLahir });
+          if (edit) M.store.patch([p.id], { nama: d.nama, gender: d.gender, jenjang: d.jenjang, sekolah: d.sekolah, alamat: d.alamat, wali: d.wali, wa: d.wa, email: d.email, ukuran: d.ukuran, infaq: Number(d.infaq) || 0, medis: d.medis, metodeBayar: d.metodeBayar, catatanPanitia: d.catatanPanitia, tglLahir: d.tglLahir });
           M.store.load(true).catch(function () { });   // selaraskan (usia, kode, dll.) diam-diam
         });
       });

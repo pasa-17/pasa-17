@@ -111,7 +111,7 @@
       '<div class="pt-name">' + esc(U.fmtRange(t.acara.mulai, t.acara.selesai)) + ' · ' + esc(String(t.acara.lokasi).split(',')[0]) + '</div></div><div class="pass-tear"></div>' +
       '<div class="pass-body"><div class="qr-box" id="qrBox" aria-label="QR check-in">' + P.qr.svg(t.qr, { margin: 2, label: 'QR check-in ' + t.kode }) + '</div>' +
       '<div><div class="kode-lbl">Kode tiket</div><div class="kode">' + esc(t.kode) + '</div></div>' +
-      '<div><div class="nm">' + esc(t.nama) + '</div><div class="sub">' + esc([gl(t.gender), t.jenjang ? t.jenjang : (t.usia ? 'Usia ' + t.usia + ' th' : ''), t.panggilan ? 'Panggilan ' + t.panggilan : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<div><div class="nm">' + esc(t.nama) + '</div><div class="sub">' + esc([gl(t.gender), t.jenjang ? t.jenjang : (t.usia ? 'Usia ' + t.usia + ' th' : '')].filter(Boolean).join(' · ')) + '</div></div>' +
       S.statusBadge(st) +
       '<div class="pass-grid"><div><small>Wali</small><b>' + esc(t.wali) + '</b></div><div><small>Ukuran kaos</small><b>' + esc(t.ukuran) + '</b></div>' +
       '<div><small>Infaq</small><b>' + U.rupiah(t.infaq) + '</b></div><div><small>Terdaftar</small><b>' + esc(U.fmtDate(String(t.dibuat).slice(0, 10))) + '</b></div>' +

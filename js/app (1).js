@@ -18,7 +18,7 @@
       '<span class="brand-txt"><b id="brandName">PASA 17</b><span id="brandSub"></span></span></a>' +
       '<div class="nav-links">' + LINKS.map(function (l) { return '<a href="' + l[0] + '" data-key="' + l[2] + '">' + l[1] + '</a>'; }).join('') + '</div>' +
       '<div class="nav-actions"><button type="button" class="icon-btn" data-theme-btn></button><a class="nav-admin" href="admin.html">Portal Admin</a>' +
-      '<a class="btn btn-primary" href="#/daftar">Daftar<span class="nav-cta-long">&nbsp;Sekarang</span></a>' +
+      '<a class="btn btn-primary" id="navDaftar" href="#/daftar">Daftar<span class="nav-cta-long">&nbsp;Sekarang</span></a>' +
       '<button type="button" class="icon-btn" id="menuBtn" aria-expanded="false" aria-controls="sheet" aria-label="Buka menu">' + U.icon('menu') + '</button></div></nav>' +
       '<div class="sheet" id="sheet" hidden>' + LINKS.map(function (l) { return '<a href="' + l[0] + '" data-key="' + l[2] + '">' + l[1] + U.icon('chevron-right') + '</a>'; }).join('') +
       '<a href="admin.html">Portal Admin' + U.icon('chevron-right') + '</a></div>';
@@ -35,6 +35,8 @@
     if (sheet && !sheet.hidden) { sheet.hidden = true; btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', 'Buka menu'); btn.innerHTML = U.icon('menu'); }
   }
   function markActive() {
+    // Tombol "Daftar" di bar atas hanya tampil di Beranda, Cek Status, dan E-Tiket (disembunyikan di Formulir & Panduan).
+    var nd = document.getElementById('navDaftar'); if (nd) nd.style.display = (cur.key === 'daftar' || cur.key === 'panduan') ? 'none' : '';
     document.querySelectorAll('#nav [data-key]').forEach(function (a) {
       if (a.getAttribute('data-key') === cur.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
