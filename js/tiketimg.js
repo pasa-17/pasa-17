@@ -47,11 +47,7 @@
       x.font = '800 38px ' + F; var used = wrap(x, t.nama, W / 2, 1066, W - 220, 46, 2);
       var y2 = 1066 + used + 6; x.fillStyle = '#5A6472'; x.font = '500 26px ' + F;
       x.fillText([gl(t.gender), t.jenjang ? t.jenjang : (t.usia ? 'Usia ' + t.usia + ' th' : ''), t.ukuran ? 'Kaos ' + t.ukuran : ''].filter(Boolean).join('  ·  '), W / 2, y2 + 8);
-      // status
-      var stc = t.statusInfaq === 'Lunas' ? ['#E3EDE3', '#2C4E30'] : t.statusInfaq === 'Bukti Ditolak' ? ['#FFDAD6', '#93000A'] : ['#FFE9DB', '#A33E00'];
-      x.font = '800 24px ' + F; var lbl = t.statusInfaq === 'Lunas' ? 'LUNAS · TERVERIFIKASI' : String(t.statusInfaq).toUpperCase(); var bw = x.measureText(lbl).width + 56;
-      rr(x, (W - bw) / 2, 1200, bw, 56, 28, stc[0]); x.fillStyle = stc[1]; x.fillText(lbl, W / 2, 1237);
-      x.fillStyle = '#7A8492'; x.font = '500 21px ' + F; x.fillText('Tunjukkan QR ini kepada panitia saat check-in', W / 2, 1290);
+      x.fillStyle = '#7A8492'; x.font = '500 21px ' + F; x.fillText('Tunjukkan QR ini kepada panitia saat check-in', W / 2, 1245);
       return new Promise(function (res) { c.toBlob(res, 'image/png'); });
     });
   }
