@@ -112,9 +112,39 @@
     A.refreshPublic().then(function (d) { mountNow(d); }, function (err) { if (cur === my) errorState(err); });
   }
 
+  // ---------- tombol WhatsApp mengambang: hubungi admin (bisa lebih dari satu) ----------
+  function parseAdmins(p) {
+    var out = [];
+    String((p && p.kontak_admin) || '').split(/\r?\n/).forEach(function (ln) {
+      ln = ln.trim(); if (!ln) return;
+      var i = ln.indexOf('|'), nama = i >= 0 ? ln.slice(0, i).trim() : '', hp = (i >= 0 ? ln.slice(i + 1) : ln).replace(/[^\d+]/g, '');
+      if (hp.replace(/\D/g, '').length >= 8) out.push({ nama: nama || ('Admin ' + (out.length + 1)), hp: hp });
+    });
+    if (!out.length && p && p.kontak_wa && String(p.kontak_wa).replace(/\D/g, '').length >= 8) out.push({ nama: 'Admin Panitia', hp: String(p.kontak_wa) });
+    return out.slice(0, 8);
+  }
+  function buildFab(d) {
+    var old = document.getElementById('fab'); if (old) old.remove();
+    var p = d && d.pengaturan, list = parseAdmins(p); if (!list.length) return;
+    var msg = 'Assalamu\'alaikum, saya ingin bertanya tentang pendaftaran ' + (p.nama_singkat || 'PASA') + '.';
+    var box = document.createElement('div'); box.id = 'fab'; box.className = 'fab';
+    var many = list.length > 1;
+    var btn = many ? '<button type="button" class="fab-btn" id="fabBtn" aria-expanded="false" aria-controls="fabMenu">' : '<a class="fab-btn" id="fabBtn" target="_blank" rel="noopener" href="' + esc(S.waLink(list[0].hp, msg)) + '">';
+    box.innerHTML = (many ? '<div class="fab-menu" id="fabMenu" hidden><div class="fab-h">Pilih admin untuk dihubungi</div>' + list.map(function (x) {
+      return '<a class="fab-item" target="_blank" rel="noopener" href="' + esc(S.waLink(x.hp, msg)) + '"><span class="fab-av">' + esc(x.nama.charAt(0).toUpperCase()) + '</span><span><b>' + esc(x.nama) + '</b><small>' + esc(x.hp) + '</small></span>' + U.icon('chat') + '</a>';
+    }).join('') + '</div>' : '') + btn + '<span class="fab-ic">' + U.icon('chat') + '</span><span class="fab-tx">Hubungi Admin</span>' + (many ? '</button>' : '</a>');
+    document.body.appendChild(box);
+    if (many) {
+      var b = box.querySelector('#fabBtn'), m = box.querySelector('#fabMenu');
+      b.addEventListener('click', function (e) { e.stopPropagation(); var o = m.hidden; m.hidden = !o; b.setAttribute('aria-expanded', String(o)); });
+      document.addEventListener('click', function (e) { if (!m.hidden && !box.contains(e.target)) { m.hidden = true; b.setAttribute('aria-expanded', 'false'); } });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) { m.hidden = true; b.setAttribute('aria-expanded', 'false'); b.focus(); } });
+    }
+  }
+
   function init() {
     main = document.getElementById('main');
-    U.installSprite(); buildNav(); buildFooter(pub()); updateBrand(pub());
+    U.installSprite(); buildNav(); buildFooter(pub()); updateBrand(pub()); buildFab(pub());
     S.bindGlobal(pub);
     var top = document.getElementById('toTop');
     top.innerHTML = U.icon('chevron-up'); top.setAttribute('aria-label', 'Kembali ke atas');
@@ -123,7 +153,7 @@
     window.addEventListener('hashchange', function () { route(); });
 
     A.onPublic(function (d) {
-      updateBrand(d); buildFooter(d);
+      updateBrand(d); buildFooter(d); buildFab(d);
       if (cur.page && cur.mounted && cur.page.update) cur.page.update(d);
     });
     route();

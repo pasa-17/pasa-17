@@ -145,7 +145,7 @@
       ['hero_judul', 'Judul hero', 'text'], ['hero_subjudul', 'Sub-judul hero', 'textarea'], ['hero_foto', 'Foto hero', 'photo'], ['logo_url', 'Logo', 'photo'],
       ['strip_judul', 'Judul foto bergerak', 'text'], ['strip_kecepatan', 'Kecepatan foto bergerak (detik/putaran; makin besar makin lambat)', 'number'],
       ['testi_judul', 'Judul testimoni', 'text'], ['testi_kecepatan', 'Kecepatan testimoni (detik/putaran)', 'number'],
-      ['kontak_wa', 'WhatsApp panitia', 'text'], ['kontak_email', 'Email panitia', 'text'], ['kontak_hotline', 'Hotline', 'text'],
+      ['kontak_wa', 'WhatsApp panitia utama', 'text'], ['kontak_admin', 'Admin WhatsApp untuk tombol bantuan (boleh lebih dari satu)', 'textarea', 'Satu admin per baris dengan format: Nama | Nomor. Contoh:\nUstadz Ahmad | 081234567890\nBu Siti | 081298765432\nBila kosong, tombol memakai nomor WhatsApp panitia utama.'], ['kontak_email', 'Email panitia', 'text'], ['kontak_hotline', 'Hotline', 'text'],
       ['alamat', 'Alamat', 'textarea'], ['peta_url', 'Tautan peta', 'url'], ['footer_teks', 'Teks footer', 'textarea'], ['warna_aksen', 'Warna aksen', 'color']] },
     { id: 'email', label: 'Email', fields: [
       ['email_nama_pengirim', 'Nama pengirim email', 'text'], ['email_medsos', 'Sertakan media sosial di email', 'select', [['true', 'Ya'], ['false', 'Tidak']]]] },
