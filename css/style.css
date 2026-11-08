@@ -976,3 +976,10 @@ main { display: block; min-height: 60vh; outline: 0; }
 @media (max-width: 559px) { .fab-tx { display: none; } .fab-btn { padding: 0 8px; } .fab { right: 12px; bottom: 12px; } #toTop { bottom: 84px; right: 12px; } }
 @media (prefers-reduced-motion: reduce) { .fab-btn { animation: none; } }
 @media print { .fab { display: none !important; } }
+
+/* halaman formulir dibuat ringkas: tanpa kartu bantuan/lokasi dan kolom profil+rekening di footer (rekening sudah ada di bagian pembayaran) */
+body[data-page="daftar"] .help-card,
+body[data-page="daftar"] .loc-card,
+body[data-page="daftar"] .footer .f-cols > div:nth-child(1),
+body[data-page="daftar"] .footer .f-cols > div:nth-child(2) { display: none; }
+body[data-page="daftar"] .footer { margin-top: 32px; padding-top: 28px; }

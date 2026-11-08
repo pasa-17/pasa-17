@@ -36,6 +36,7 @@
   }
   function markActive() {
     // Tombol "Daftar" di bar atas hanya tampil di Beranda, Cek Status, dan E-Tiket (disembunyikan di Formulir & Panduan).
+    document.body.setAttribute('data-page', cur.key || '');
     var nd = document.getElementById('navDaftar'); if (nd) nd.style.display = (cur.key === 'daftar' || cur.key === 'panduan') ? 'none' : '';
     document.querySelectorAll('#nav [data-key]').forEach(function (a) {
       if (a.getAttribute('data-key') === cur.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
