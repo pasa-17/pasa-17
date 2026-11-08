@@ -177,12 +177,49 @@
     return M.store.track(pr);
   }
 
+  // ---------- e-tiket: unduh / cetak ----------
+  function fetchTiket(ids, onProg) {
+    var out = [], i = 0;
+    return new Promise(function (res, rej) {
+      (function next() {
+        if (i >= ids.length) return res(out);
+        M.run('adminTiketData', { ids: ids.slice(i, i + 100) }, { quiet: true, timeout: 90000 }).then(function (r) {
+          if (!r) return rej(new Error('Gagal mengambil data tiket.'));
+          out = out.concat(r.data.items); i += 100; if (onProg) onProg(Math.min(i, ids.length), ids.length); next();
+        }, rej);
+      })();
+    });
+  }
+  function tiketOne(p, btn) {
+    if (btn.disabled) return; btn.disabled = true;
+    fetchTiket([p.id]).then(function (items) { return P.tiketImg.downloadOne(items[0]); })
+      .then(function () { U.toast('Tiket ' + p.kode + ' diunduh.', 'ok'); }, function (e) { U.toast(e.message || 'Gagal membuat tiket.', 'err'); })
+      .then(function () { btn.disabled = false; });
+  }
+  function tiketDialog(ids, label) {
+    if (!ids.length) return U.toast('Tidak ada peserta untuk dicetak.', 'err');
+    var m = U.openModal({ title: 'Unduh / Cetak E-Tiket', html: '<p>Tiket untuk <b>' + h(label) + '</b>.</p><p class="muted">Cetak: 4 tiket per lembar A4 (bisa disimpan sebagai PDF). ZIP: satu berkas PNG per peserta, sekali unduh.</p>' +
+      '<div class="acts"><button type="button" class="btn btn-primary" data-p>' + U.icon('download') + ' Cetak / Simpan PDF</button><button type="button" class="btn btn-soft" data-z>' + U.icon('download') + ' Unduh ZIP (PNG)</button></div><p class="muted" id="tg" aria-live="polite"></p>' });
+    var busy = false, tg = m.body.querySelector('#tg');
+    function run(kind) {
+      if (busy) return; busy = true; m.body.querySelectorAll('button[data-p],button[data-z]').forEach(function (b) { b.disabled = true; });
+      tg.textContent = 'Mengambil data…';
+      fetchTiket(ids, function (i, n) { tg.textContent = 'Mengambil data ' + i + '/' + n + '…'; }).then(function (items) {
+        var pr = function (i, n) { tg.textContent = 'Membuat gambar tiket ' + i + '/' + n + '…'; };
+        return kind === 'p' ? P.tiketImg.printAll(items, pr) : P.tiketImg.downloadZip(items, pr);
+      }).then(function () { tg.textContent = 'Selesai.'; U.toast(kind === 'p' ? 'Jendela cetak dibuka.' : 'ZIP tiket diunduh.', 'ok'); m.close && m.close(); },
+        function (e) { tg.textContent = (e && e.message) || 'Gagal.'; busy = false; m.body.querySelectorAll('button[data-p],button[data-z]').forEach(function (b) { b.disabled = false; }); });
+    }
+    m.body.querySelector('[data-p]').addEventListener('click', function () { run('p'); });
+    m.body.querySelector('[data-z]').addEventListener('click', function () { run('z'); });
+  }
+
   function listPage(mode) {
     return function (el) {
       var q = { status: mode === 'bayar' ? 'Bukti Sedang Dicek' : '', q: '', ukuran: '', page: 1, pageSize: 25 };
-      var sel = {}, rows = [], counts = {}, total = 0, alive = true, off = null;
+      var sel = {}, rows = [], fIds = [], counts = {}, total = 0, alive = true, off = null;
       el.innerHTML = '<div class="page-head"><div><h1>' + (mode === 'bayar' ? 'Verifikasi Pembayaran' : 'Data Peserta') + '</h1><p class="muted">' + (mode === 'bayar' ? 'Periksa bukti transfer lalu setujui (ACC) atau tolak.' : 'Cari, ubah, dan kelola seluruh data santri.') + '</p></div>' +
-        '<div class="head-acts"><button type="button" class="btn btn-soft btn-sm" id="csv">' + U.icon('download') + ' Ekspor CSV</button>' +
+        '<div class="head-acts"><button type="button" class="btn btn-soft btn-sm" id="tiketAll">' + U.icon('ticket') + ' Unduh / Cetak Tiket</button><button type="button" class="btn btn-soft btn-sm" id="csv">' + U.icon('download') + ' Ekspor CSV</button>' +
         (mode === 'peserta' ? '<button type="button" class="btn btn-soft btn-sm" id="trash">' + U.icon('trash') + ' Tempat Sampah</button><button type="button" class="btn btn-primary btn-sm" id="add">' + U.icon('plus') + ' Tambah Peserta</button>' : '') + '</div></div>' +
         '<section class="card list-card"><div class="toolbar"><div class="tabs" id="tabs" role="tablist"></div><div class="tb-right"><div class="search">' + U.icon('search') + '<input type="search" id="q" placeholder="Cari nama, wali, kode, WA…" aria-label="Cari peserta"></div><select class="select sm" id="ukr" aria-label="Filter ukuran kaos"><option value="">Semua kaos</option></select></div></div>' +
         '<div class="bulk" id="bulk" hidden></div><div id="rows" class="rows">' + (M.store.ready() ? '' : M.skeleton(4)) + '</div><div class="pager" id="pager"></div></section>';
@@ -203,7 +240,7 @@
         if (q.ukuran) f = f.filter(function (p) { return p.ukuran === q.ukuran; });
         if (needle) f = f.filter(function (p) { return blob(p).indexOf(needle) >= 0; });
         f = f.slice().sort(function (a, b) { return a.dibuat < b.dibuat ? 1 : a.dibuat > b.dibuat ? -1 : 0; });
-        total = f.length;
+        total = f.length; fIds = f.map(function (p) { return p.id; });
         q.page = Math.min(q.page, Math.max(1, Math.ceil(total / q.pageSize)));
         rows = f.slice((q.page - 1) * q.pageSize, q.page * q.pageSize);
         var ids = {}; all.forEach(function (p) { ids[p.id] = 1; }); Object.keys(sel).forEach(function (k) { if (!ids[k]) delete sel[k]; });
@@ -230,6 +267,7 @@
           (!lunas ? '<button type="button" class="btn btn-ok btn-sm" data-acc>' + U.icon('check') + ' ACC</button>' : '') +
           (p.statusInfaq !== 'Bukti Ditolak' && p.adaBukti ? '<button type="button" class="btn btn-no btn-sm" data-tolak aria-label="Tolak bukti">' + U.icon('x') + '</button>' : '') +
           (p.statusInfaq === 'Menunggu Bukti' ? '<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="' + h(M.waLink(p.wa, 'Assalamu\'alaikum warahmatullahi wabarakatuh. Yth. Bapak/Ibu ' + (p.wali || 'Wali Santri') + ', kami dari panitia PASA 17. Mohon kesediaan Bapak/Ibu untuk melengkapi bukti transfer infaq ananda ' + p.nama + ' (' + p.kode + ') melalui situs pendaftaran. Terima kasih atas perhatian dan kerja samanya. Jazakumullahu khairan.')) + '">' + U.icon('chat') + ' Ingatkan</a>' : '') +
+          '<button type="button" class="icon-btn sm" data-tiket aria-label="Unduh tiket ' + h(p.nama) + '" title="Unduh e-tiket">' + U.icon('download') + '</button>' +
           '<button type="button" class="icon-btn sm" data-edit aria-label="Ubah data ' + h(p.nama) + '">' + U.icon('edit') + '</button></div>' +
           '</article>';
       }
@@ -245,7 +283,7 @@
         var ids = Object.keys(sel).filter(function (k) { return sel[k]; }), b = el.querySelector('#bulk');
         b.hidden = !ids.length;
         if (!ids.length) return;
-        b.innerHTML = '<b>' + ids.length + ' dipilih</b><button type="button" class="btn btn-ok btn-sm" data-b="Lunas">ACC (Lunas)</button><button type="button" class="btn btn-soft btn-sm" data-b="Menunggu Bukti">Menunggu Bukti</button><button type="button" class="btn btn-no btn-sm" data-b="Bukti Ditolak">Tolak</button><button type="button" class="btn btn-soft btn-sm" data-b="__mail">' + U.icon('mail') + ' Kirim ulang email</button><button type="button" class="btn btn-danger btn-sm" data-b="__del">' + U.icon('trash') + ' Hapus</button><button type="button" class="btn btn-soft btn-sm" data-b="__none">Batal pilih</button>';
+        b.innerHTML = '<b>' + ids.length + ' dipilih</b><button type="button" class="btn btn-ok btn-sm" data-b="Lunas">ACC (Lunas)</button><button type="button" class="btn btn-soft btn-sm" data-b="Menunggu Bukti">Menunggu Bukti</button><button type="button" class="btn btn-no btn-sm" data-b="Bukti Ditolak">Tolak</button><button type="button" class="btn btn-soft btn-sm" data-b="__tiket">' + U.icon('ticket') + ' Unduh / Cetak Tiket</button><button type="button" class="btn btn-soft btn-sm" data-b="__mail">' + U.icon('mail') + ' Kirim ulang email</button><button type="button" class="btn btn-danger btn-sm" data-b="__del">' + U.icon('trash') + ' Hapus</button><button type="button" class="btn btn-soft btn-sm" data-b="__none">Batal pilih</button>';
       }
       function find(id) { return rows.filter(function (p) { return p.id === id; })[0]; }
 
@@ -259,6 +297,7 @@
         if (bb) {
           var act = bb.getAttribute('data-b'), ids = Object.keys(sel).filter(function (k) { return sel[k]; });
           if (act === '__none') { sel = {}; return render(); }
+          if (act === '__tiket') return tiketDialog(ids, ids.length + ' peserta terpilih');
           if (act === '__mail') {
             if (ids.length > 25) return U.toast('Maksimal 25 email sekali kirim. Kurangi pilihan.', 'err');
             return M.run('adminKirimUlangEmail', { ids: ids }, { ok: true, timeout: 120000 }).then(function () { M.store.load(true).catch(function () { }); });
@@ -280,6 +319,7 @@
         }
         if (t.closest('[data-tolak]')) return askReject([p.id], p.nama, function (a) { setStatus([p.id], 'Bukti Ditolak', a); });
         if (t.closest('[data-bukti]')) return showBukti(p);
+        if (t.closest('[data-tiket]')) return tiketOne(p, t.closest('[data-tiket]'));
         if (t.closest('[data-edit]')) return pesertaForm(p);
       });
       el.addEventListener('change', function (e) {
@@ -291,6 +331,10 @@
       var warm = function (e) { var b = e.target.closest && e.target.closest('[data-bukti]'); if (!b) return; var r = b.closest('.prow[data-id]'); if (r) M.bukti(r.getAttribute('data-id')).catch(function () { }); };
       el.addEventListener('mouseover', warm); el.addEventListener('touchstart', warm, { passive: true });
       el.querySelector('#csv').addEventListener('click', function () { exportCsv(this); });
+      el.querySelector('#tiketAll').addEventListener('click', function () {
+        var ids = Object.keys(sel).filter(function (k) { return sel[k]; });
+        tiketDialog(ids.length ? ids : fIds.slice(), ids.length ? ids.length + ' peserta terpilih' : (q.status || q.q || q.ukuran ? 'semua hasil filter (' + fIds.length + ' peserta)' : 'semua peserta (' + fIds.length + ' peserta)'));
+      });
       var add = el.querySelector('#add'); if (add) add.addEventListener('click', function () { pesertaForm(null); });
       var tr = el.querySelector('#trash'); if (tr) tr.addEventListener('click', function () { trashModal(); });
 
