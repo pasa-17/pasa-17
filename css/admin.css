@@ -482,3 +482,27 @@ a.stat:hover { box-shadow: var(--sh3); }
 .size-gh { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .size-gh b { font-size: 14px; }
 .size-pill.off { opacity: .55; }
+
+/* kartu infaq bisa diklik + rincian */
+button.stat { text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%; }
+button.stat.clickable:hover, button.stat.clickable:focus-visible { box-shadow: var(--sh3); border-color: color-mix(in srgb, var(--sage, #0E8F6E) 55%, transparent); outline: 0; }
+.stat p.belum { color: #A44100; background: color-mix(in srgb, #E85D04 10%, transparent); border-radius: 10px; padding: 6px 10px; }
+.stat p.belum b { color: #A44100; }
+.stat .more { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 800; color: var(--brand-ink, #A44100); }
+.stat .more svg { width: 14px; height: 14px; }
+.ir-tabs { display: flex; gap: 6px; padding: 4px; background: var(--surface-2); border-radius: 999px; margin-bottom: 14px; }
+.ir-tabs button { flex: 1; border: 0; background: transparent; font: inherit; font-weight: 800; font-size: 14px; padding: 11px 10px; border-radius: 999px; cursor: pointer; color: var(--muted); }
+.ir-tabs button.on { background: #0E8F6E; color: #fff; }
+.ir-tabs button.belum.on { background: #E85D04; }
+.ir-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.ir-tile { border: 2px solid var(--line-strong); background: var(--surface); border-radius: 16px; padding: 10px 12px; text-align: left; font: inherit; cursor: pointer; display: grid; gap: 2px; color: var(--ink); }
+.ir-tile small { font-weight: 800; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ir-tile b { font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.ir-tile span { font-size: 12px; color: var(--muted); }
+.ir-tile.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink) inset; }
+.ir-list { display: grid; gap: 6px; max-height: 48vh; overflow: auto; }
+.ir-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; background: var(--surface-2); }
+.ir-row small { display: block; color: var(--muted); font-size: 12.5px; }
+.ir-row .amt { white-space: nowrap; }
+@media (max-width: 520px) { .ir-sum { grid-template-columns: 1fr; } }
+.stat p b { display: inline; margin: 0; }

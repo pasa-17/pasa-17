@@ -144,16 +144,19 @@
     dashboard: function () {
       var d = Object.assign({}, ST.dash), rows = ST.peserta;
       var st = {}; STATUS_L.forEach(function (s) { st[s] = 0; }); var ter = 0, pen = 0, hari = {};
+      // Rincian infaq: hanya yang sudah di-ACC (Lunas) masuk "terverifikasi"; sisanya = belum di-ACC.
+      var ri = { lunas: { transfer: { n: 0, rp: 0 }, tunai: { n: 0, rp: 0 } }, belum: { 'Bukti Sedang Dicek': { n: 0, rp: 0 }, 'Bayar Tunai': { n: 0, rp: 0 }, 'Menunggu Bukti': { n: 0, rp: 0 }, 'Bukti Ditolak': { n: 0, rp: 0 } } };
       rows.forEach(function (p) {
         st[p.statusInfaq] = (st[p.statusInfaq] || 0) + 1;
-        if (p.statusInfaq === 'Lunas') ter += Number(p.infaq) || 0;
-        if (p.statusInfaq === 'Bukti Sedang Dicek') pen += Number(p.infaq) || 0;
+        var rp = Number(p.infaq) || 0, tn = M.metodeTunai(p);
+        if (p.statusInfaq === 'Lunas') { ter += rp; var lm = ri.lunas[tn ? 'tunai' : 'transfer']; lm.n++; lm.rp += rp; }
+        else if (ri.belum[p.statusInfaq]) { var bl = ri.belum[p.statusInfaq]; bl.n++; bl.rp += rp; if (p.statusInfaq !== 'Bukti Ditolak') pen += rp; }
         var k = String(p.dibuat || '').slice(0, 10); if (k) hari[k] = (hari[k] || 0) + 1;
       });
       var sesi = ST.sesi.filter(function (s) { return s.aktif === 'true'; })[0], hadir = {};
       if (sesi) ST.checkin.forEach(function (c) { if (c.sesiId === sesi.id) hadir[c.pid] = 1; });
       d.totalPendaftar = rows.length; d.sisaKuota = Math.max(0, (d.kuota || 0) - rows.length);
-      d.statusInfaq = st; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
+      d.statusInfaq = st; d.infaqRinci = ri; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
       d.rekapUkuran = ST.ukuran.map(function (u) { return { label: UN(u), aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === UN(u); }).length }; });
       // Rekap kaos dipisah Ikhwan / Akhwat (untuk pemesanan): hitung dari jenis kelamin santri + ukuran.
       var dasar = function (v) { return String(v || '').replace(/^(Ikhwan|Akhwat)\s+/, ''); };
@@ -195,6 +198,8 @@
     var n = String(wa || '').replace(/\D/g, ''); if (n.charAt(0) === '0') n = '62' + n.slice(1);
     return 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '');
   };
+  // Pembayaran tunai? (metode berisi kata tunai/cash, atau status Bayar Tunai tanpa metode)
+  M.metodeTunai = function (p) { return /tunai|cash/i.test(p.metodeBayar || '') || (!p.metodeBayar && p.statusInfaq === 'Bayar Tunai'); };
   M.debounce = function (fn, ms) { var t; return function () { var a = arguments, c = this; clearTimeout(t); t = setTimeout(function () { fn.apply(c, a); }, ms); }; };
 
   // Konfirmasi (pengganti confirm()). Mengembalikan Promise<boolean>.

@@ -5,6 +5,43 @@
   var UN = (U.ukuranNama || function (u) { return (u.untuk === 'L' ? 'Ikhwan ' : u.untuk === 'P' ? 'Akhwat ' : '') + u.label; });
   var STATUS = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak', 'Bayar Tunai'];
 
+  // Rincian infaq: tab "Sudah di-ACC" dan "Belum di-ACC", bisa disaring Transfer / Tunai.
+  function infaqRinci() {
+    var tab = 'ok', met = 'all';
+    var m = U.openModal({ title: 'Rincian Infaq', cls: 'wide', html: '<div id="irBox"></div>' });
+    var box = m.body.querySelector('#irBox');
+    function rowsFor() {
+      return M.store.data.peserta.filter(function (p) {
+        var ok = p.statusInfaq === 'Lunas', tn = M.metodeTunai(p);
+        if (tab === 'ok' ? !ok : (ok || p.statusInfaq === 'Bukti Ditolak')) return false;
+        return met === 'all' || (met === 'tunai') === tn;
+      });
+    }
+    function sum(list) { return list.reduce(function (s, p) { return s + (Number(p.infaq) || 0); }, 0); }
+    function draw() {
+      var base = M.store.data.peserta.filter(function (p) { var ok = p.statusInfaq === 'Lunas'; return tab === 'ok' ? ok : (!ok && p.statusInfaq !== 'Bukti Ditolak'); });
+      var tr = base.filter(function (p) { return !M.metodeTunai(p); }), tu = base.filter(M.metodeTunai), list = rowsFor();
+      var ditolak = M.store.data.peserta.filter(function (p) { return p.statusInfaq === 'Bukti Ditolak'; });
+      list.sort(function (a, b) { return String(a.kode).localeCompare(String(b.kode)); });
+      box.innerHTML =
+        '<div class="ir-tabs" role="tablist"><button type="button" role="tab" class="' + (tab === 'ok' ? 'on' : '') + '" data-tab="ok">Sudah di-ACC (Lunas)</button><button type="button" role="tab" class="' + (tab === 'belum' ? 'on belum' : 'belum') + '" data-tab="belum">Belum di-ACC</button></div>' +
+        '<div class="ir-sum">' +
+        '<button type="button" class="ir-tile' + (met === 'all' ? ' on' : '') + '" data-met="all"><small>Semua</small><b>' + U.rupiah(sum(base)) + '</b><span>' + num(base.length) + ' peserta</span></button>' +
+        '<button type="button" class="ir-tile' + (met === 'transfer' ? ' on' : '') + '" data-met="transfer"><small>Transfer</small><b>' + U.rupiah(sum(tr)) + '</b><span>' + num(tr.length) + ' peserta</span></button>' +
+        '<button type="button" class="ir-tile' + (met === 'tunai' ? ' on' : '') + '" data-met="tunai"><small>Tunai</small><b>' + U.rupiah(sum(tu)) + '</b><span>' + num(tu.length) + ' peserta</span></button></div>' +
+        (tab === 'belum' ? '<p class="help">Belum masuk total terverifikasi. Buka <a href="#/bayar" data-go>Verifikasi Bayar</a> untuk meng-ACC.' + (ditolak.length ? ' Bukti ditolak (' + ditolak.length + ' peserta) tidak dihitung di sini.' : '') + '</p>' : '') +
+        '<div class="ir-list">' + (list.length ? list.map(function (p) {
+          return '<div class="ir-row"><div><b>' + h(p.nama) + '</b><small>' + h(p.kode) + ' · ' + (M.metodeTunai(p) ? 'Tunai' : 'Transfer') + ' · ' + h(M.statusLabel(p.statusInfaq)) + '</small></div><b class="amt">' + U.rupiah(p.infaq) + '</b></div>';
+        }).join('') : '<p class="muted" style="padding:16px;text-align:center">Tidak ada data.</p>') + '</div>';
+    }
+    box.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-tab]'); if (t) { tab = t.getAttribute('data-tab'); met = 'all'; draw(); return; }
+      var mt = e.target.closest('[data-met]'); if (mt) { met = mt.getAttribute('data-met'); draw(); return; }
+      if (e.target.closest('[data-go]')) m.close();
+    });
+    draw();
+  }
+
   function pct(a, b) { return b > 0 ? Math.min(100, Math.round(a * 100 / b)) : 0; }
   function num(n) { return Number(n || 0).toLocaleString('id-ID'); }
 
@@ -43,8 +80,11 @@
         '<div class="stats">' +
         '<div class="stat card"><span class="stat-ic">' + U.icon('users') + '</span><small>TOTAL PENDAFTAR</small><b>' + num(d.totalPendaftar) + ' <em>/ ' + num(d.kuota) + '</em></b>' +
         '<div class="meter"><i style="width:' + pct(d.totalPendaftar, d.kuota) + '%"></i></div><p>Terisi ' + pct(d.totalPendaftar, d.kuota) + '% · sisa kuota <b>' + num(d.sisaKuota) + '</b> santri</p></div>' +
-        '<div class="stat card"><span class="stat-ic sage">' + U.icon('wallet') + '</span><small>INFAQ TERVERIFIKASI</small><b>' + U.rupiah(d.infaq.terhimpun) + '</b>' +
-        '<div class="meter sage"><i style="width:' + pct(d.infaq.terhimpun, tgt) + '%"></i></div><p>' + (tgt ? 'Target ' + U.rupiah(tgt) + ' (' + pct(d.infaq.terhimpun, tgt) + '%) · ' : '') + 'menunggu verifikasi ' + U.rupiah(d.infaq.pending) + '</p></div>' +
+        '<button type="button" class="stat card clickable" id="infaqCard" aria-haspopup="dialog"><span class="stat-ic sage">' + U.icon('wallet') + '</span><small>INFAQ TERVERIFIKASI (SUDAH DI-ACC)</small><b>' + U.rupiah(d.infaq.terhimpun) + '</b>' +
+        '<div class="meter sage"><i style="width:' + pct(d.infaq.terhimpun, tgt) + '%"></i></div>' +
+        '<p>Transfer <b>' + U.rupiah(d.infaqRinci.lunas.transfer.rp) + '</b> · Tunai <b>' + U.rupiah(d.infaqRinci.lunas.tunai.rp) + '</b></p>' +
+        '<p class="belum">Belum di-ACC: <b>' + U.rupiah(d.infaq.pending) + '</b> (' + num(d.infaqRinci.belum['Bukti Sedang Dicek'].n + d.infaqRinci.belum['Bayar Tunai'].n + d.infaqRinci.belum['Menunggu Bukti'].n) + ' peserta)</p>' +
+        '<span class="more">Ketuk untuk lihat rincian ' + U.icon('chevron-right') + '</span></button>' +
         '<a class="stat card warn" href="#/bayar"><span class="stat-ic orange">' + U.icon('verify') + '</span><small>BUTUH VERIFIKASI</small><b>' + num(st['Bukti Sedang Dicek']) + ' <em>bukti</em></b><p>Menunggu bukti: ' + num(st['Menunggu Bukti']) + ' · bayar tunai: ' + num(st['Bayar Tunai']) + ' · ditolak: ' + num(st['Bukti Ditolak']) + '</p><span class="go">Tinjau sekarang ' + U.icon('arrow-right') + '</span></a>' +
         '<a class="stat card" href="#/scan"><span class="stat-ic">' + U.icon('qr') + '</span><small>CHECK-IN KEDATANGAN</small><b>' + num(d.kehadiran.hadir) + ' <em>/ ' + num(d.kehadiran.total) + ' santri</em></b><div class="meter"><i style="width:' + pct(d.kehadiran.hadir, d.kehadiran.total) + '%"></i></div><p>Sesi: ' + h(d.kehadiran.sesi || '—') + '</p></a>' +
         '</div>' +
@@ -52,6 +92,7 @@
         '<section class="card pad dark"><span class="eyebrow on-navy">Email blast</span><h2>Kirim Ulang E-Tiket</h2><p>Kirim ulang e-tiket QR ke wali yang statusnya Lunas dan emailnya belum terkirim. Maksimal 25 email per kiriman; sisa kuota email hari ini: <b>' + (d.sisaKuotaEmail == null ? '—' : num(d.sisaKuotaEmail)) + '</b>.</p>' +
         '<button type="button" class="btn btn-primary" id="blastBtn">' + U.icon('send') + ' Kirim Ulang E-Tiket</button></section></div>' +
         '<section class="card pad"><div class="sec-h"><div><span class="eyebrow">Tren</span><h2>Pendaftar per Hari</h2></div></div>' + chart + '</section>';
+      el.querySelector('#infaqCard').addEventListener('click', infaqRinci);
       el.querySelector('#regSw').addEventListener('click', function () {
         var want = !open; var sw = this; sw.disabled = true;
         M.confirm(want ? 'Buka pendaftaran?' : 'Tutup pendaftaran?', want ? 'Wali dapat mulai mendaftar lewat situs.' : 'Formulir pendaftaran akan ditutup untuk umum.', want ? 'Buka' : 'Tutup', !want).then(function (ok) {
