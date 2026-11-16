@@ -18,9 +18,9 @@
   function minInfaq() { return parseInt(pub.pengaturan.infaq_min, 10) || 0; }
   function nominal() { return parseInt(st.infaq, 10) || minInfaq(); }
   function sumHtml() {
-    var n = st.rows.length, nom = nominal(), pot = st.kodeInfo ? Math.min(st.kodeInfo.potongan, nom) : 0, per = Math.max(0, nom - pot);
+    var n = st.rows.length, nom = nominal(), pot = st.kodeInfo ? Math.min(nom, Math.round(nom * st.kodeInfo.persen / 100)) : 0, per = Math.max(0, nom - pot);
     return '<div class="rows"><div><span>Infaq per santri</span><span>' + U.rupiah(nom) + '</span></div>' +
-      (pot ? '<div><span>Potongan rombongan' + (st.kodeInfo.nama ? ' (' + esc(st.kodeInfo.nama) + ')' : '') + '</span><span>− ' + U.rupiah(pot) + '</span></div>' : '') +
+      (pot ? '<div><span>Potongan rombongan ' + st.kodeInfo.persen + '%' + (st.kodeInfo.nama ? ' (' + esc(st.kodeInfo.nama) + ')' : '') + '</span><span>− ' + U.rupiah(pot) + '</span></div>' : '') +
       '<div><span>Jumlah santri</span><span>' + n + '</span></div><div class="tot"><span>Total infaq rombongan</span><b>' + U.rupiah(per * n) + '</b></div></div>';
   }
   function updSum() { var e = root && root.querySelector('#rbSum'); if (e) e.innerHTML = sumHtml(); }
@@ -29,7 +29,7 @@
     if (!v) { st.kodeInfo = null; m.innerHTML = ''; return updSum(); }
     m.innerHTML = '<span class="muted">Memeriksa kode…</span>';
     A.post('cekKodeRombongan', { kode: v }, 20000).then(function (r) {
-      if (r && r.success) { st.kodeInfo = r.data; m.innerHTML = '<span class="kode-ok">' + U.icon('check') + ' Kode <b>' + esc(r.data.kode) + '</b> berlaku' + (r.data.potongan ? ': potongan ' + U.rupiah(r.data.potongan) + ' per santri' : '') + '.</span>'; }
+      if (r && r.success) { st.kodeInfo = r.data; m.innerHTML = '<span class="kode-ok">' + U.icon('check') + ' Kode <b>' + esc(r.data.kode) + '</b> berlaku' + ': potongan ' + r.data.persen + '%' + (r.data.min ? ', minimal ' + r.data.min + ' santri' : '') + '.</span>'; }
       else { st.kodeInfo = null; m.innerHTML = '<span class="kode-no">' + esc((r && r.message) || 'Kode tidak dikenali.') + '</span>'; }
       updSum();
     }, function () { m.innerHTML = '<span class="kode-no">Gagal memeriksa kode. Coba lagi.</span>'; });
@@ -61,7 +61,7 @@
       '<div class="field"><label class="lbl" for="rombongan">Nama sekolah / rombongan <span class="req">*</span></label><input class="input" id="rombongan" data-g="rombongan" placeholder="Contoh: SDIT Bina Insan Mulia - Kelas 5" value="' + esc(st.rombongan) + '"></div>' +
       '<div class="field"><label class="lbl" for="koordinator">Nama koordinator / guru <span class="opt">(opsional)</span></label><input class="input" id="koordinator" data-g="koordinator" value="' + esc(st.koordinator) + '"></div>' +
       '<div class="field"><label class="lbl" for="koordinatorWa">WhatsApp koordinator <span class="opt">(opsional)</span></label><input class="input" id="koordinatorWa" data-g="koordinatorWa" inputmode="tel" value="' + esc(st.koordinatorWa) + '"></div>' +
-      '<div class="field"><label class="lbl" for="kode">Kode rombongan <span class="opt">(opsional)</span></label><div class="kode-row"><input class="input" id="kode" data-g="kode" autocapitalize="characters" maxlength="30" value="' + esc(st.kode) + '" placeholder="Bila diberi panitia"><button type="button" class="btn btn-soft" data-kode-cek>Terapkan</button></div><div class="kode-msg" id="kodeMsg" aria-live="polite"></div><div class="help">Kode dari panitia memberi potongan infaq per santri.</div></div></section>' +
+      '<div class="field"><label class="lbl" for="kode">Kode rombongan <span class="req">*</span></label><div class="kode-row"><input class="input" id="kode" data-g="kode" autocapitalize="characters" maxlength="30" value="' + esc(st.kode) + '" placeholder="Kode dari panitia"><button type="button" class="btn btn-soft" data-kode-cek>Terapkan</button></div><div class="kode-msg" id="kodeMsg" aria-live="polite"></div><div class="help">Kode wajib diisi dan diberikan panitia. Kode menentukan potongan infaq dan minimal jumlah santri.</div></div></section>' +
       '<section class="card rb-card"><h2>2. Nominal Infaq per Santri</h2>' + quickHtml() + '<div class="field"><label class="lbl" for="rbInfaq">Atau nominal lain</label><div class="input-affix"><span class="pre" aria-hidden="true">Rp</span><input class="input" id="rbInfaq" inputmode="numeric" placeholder="Contoh: 175000" value="' + (quick().indexOf(parseInt(st.infaq, 10)) >= 0 ? '' : esc(st.infaq)) + '"></div><div class="help">Minimum ' + U.rupiah(minInfaq()) + ' per santri.</div></div><div id="rbSum">' + sumHtml() + '</div></section>' +
       '<section class="card rb-card"><div class="rb-head"><h2>3. Daftar Santri</h2><b id="rbCount">' + st.rows.length + ' santri</b></div>' +
       '<div id="rbRows" class="rb-rows">' + st.rows.map(rowHtml).join('') + '</div>' +
@@ -90,6 +90,9 @@
   function validate() {
     if (st.rombongan.trim().length < 3) return 'Nama sekolah / rombongan wajib diisi.';
     if (st.koordinatorWa && !/^0\d{8,13}$/.test(normWa(st.koordinatorWa))) return 'Nomor WhatsApp koordinator tidak valid.';
+    if (!(st.kode || '').trim()) return 'Kode rombongan wajib diisi. Minta kode kepada panitia.';
+    if (!st.kodeInfo) return 'Tekan tombol Terapkan untuk memeriksa kode rombongan.';
+    if (st.rows.length < (st.kodeInfo.min || 0)) return 'Kode ' + st.kodeInfo.kode + ' berlaku untuk minimal ' + st.kodeInfo.min + ' santri. Saat ini baru ' + st.rows.length + ' santri.';
     var seen = {};
     for (var i = 0; i < st.rows.length; i++) {
       var r = st.rows[i], n = 'Santri no. ' + (i + 1) + ': ';
@@ -102,7 +105,6 @@
       if (seen[key]) return n + 'sama dengan baris sebelumnya.'; seen[key] = 1;
     }
     if (nominal() < minInfaq()) return 'Infaq minimal ' + U.rupiah(minInfaq()) + ' per santri.';
-    if ((st.kode || '').trim() && !st.kodeInfo) return 'Tekan tombol Terapkan untuk memeriksa kode rombongan, atau kosongkan kolomnya.';
     if (!st.setuju) return 'Anda harus menyetujui ketentuan untuk melanjutkan.';
     return '';
   }

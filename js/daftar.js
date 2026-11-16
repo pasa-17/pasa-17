@@ -154,7 +154,7 @@
 
   // ---------- ringkasan ----------
   function updateSummary() {
-    var d = st.d, z = size(), amt = parseInt(d.infaq, 10) || 0, pot = st.kode ? Math.min(st.kode.potongan, amt) : 0;
+    var d = st.d, z = size(), amt = parseInt(d.infaq, 10) || 0, pot = st.kode ? Math.min(amt, Math.round(amt * st.kode.persen / 100)) : 0;
     var gl = d.gender === 'L' ? 'Ikhwan' : d.gender === 'P' ? 'Akhwat' : '';
     var el = root && root.querySelector('#sumBody'); if (!el) return;
     el.innerHTML = '<div class="mini-ticket"><div class="mt-top"><span>' + esc(p().nama_singkat) + ' • ' + esc(String(p().lokasi).split(/[,&]/)[0].replace(/\s+$/, '')) + '</span><b>Draft</b></div>' +
@@ -163,21 +163,22 @@
       '<div class="mt-grid"><div><small>Kaos peserta</small><b>' + (z ? esc(z.label) + ' (LD ' + esc(z.lebar) + ' × TB ' + esc(z.panjang) + ' cm)' : '—') + '</b></div>' +
       '<div><small>Infaq</small><b class="o">' + (amt ? U.rupiah(Math.max(0, amt - pot)) : '—') + '</b></div></div></div>' +
       '<div class="rows"><div><span>Infaq operasional camp</span><span>' + U.rupiah(amt) + '</span></div>' +
-      (pot ? '<div><span>Potongan rombongan' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + '</span><span>− ' + U.rupiah(pot) + '</span></div>' : '') +
+      (pot ? '<div><span>Potongan ' + st.kode.persen + '%' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + '</span><span>− ' + U.rupiah(pot) + '</span></div>' : '') +
       '<div><span>Biaya verifikasi sistem</span><span>Gratis (Rp0)</span></div>' +
       '<div class="tot"><span>' + (pot ? 'Total yang dibayar' : 'Total diterima') + '</span><b>' + U.rupiah(Math.max(0, amt - pot)) + '</b></div></div>';
   }
 
   function kodeMsg() {
     if (!st.kode) return '';
-    return '<span class="kode-ok">' + U.icon('check') + ' Kode <b>' + esc(st.kode.kode) + '</b> berlaku' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + (st.kode.potongan ? ': potongan ' + U.rupiah(st.kode.potongan) + ' per anak' : '') + '.</span>';
+    return '<span class="kode-ok">' + U.icon('check') + ' Kode <b>' + esc(st.kode.kode) + '</b> berlaku' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + ': potongan ' + st.kode.persen + '%.</span>';
   }
   function cekKode() {
     var v = (st.d.kode || '').trim(), m = root.querySelector('#kodeMsg'); if (!m) return;
     if (!v) { st.kode = null; m.innerHTML = ''; updateSummary(); return; }
     m.innerHTML = '<span class="muted">Memeriksa kode…</span>';
     A.post('cekKodeRombongan', { kode: v }, 20000).then(function (r) {
-      if (r && r.success) { st.kode = r.data; m.innerHTML = kodeMsg(); clearErr('kode'); }
+      if (r && r.success && r.data.min > 1) { st.kode = null; m.innerHTML = '<span class="kode-no">Kode ini khusus rombongan (minimal ' + r.data.min + ' santri). Silakan gunakan formulir rombongan.</span>'; }
+      else if (r && r.success) { st.kode = r.data; m.innerHTML = kodeMsg(); clearErr('kode'); }
       else { st.kode = null; m.innerHTML = '<span class="kode-no">' + esc((r && r.message) || 'Kode tidak dikenali.') + '</span>'; }
       updateSummary();
     }, function () { m.innerHTML = '<span class="kode-no">Gagal memeriksa kode. Coba lagi.</span>'; });
