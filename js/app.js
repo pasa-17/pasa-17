@@ -3,7 +3,7 @@
   'use strict';
   var P = window.PASA = window.PASA || {};
   var U = P.ui, S = P.shared, A = P.api, esc = U.esc;
-  var ROUTES = { '': 'home', '/': 'home', '/daftar': 'daftar', '/cek': 'cek', '/tiket': 'tiket', '/panduan': 'panduan' };
+  var ROUTES = { '': 'home', '/': 'home', '/daftar': 'daftar', '/cek': 'cek', '/tiket': 'tiket', '/panduan': 'panduan', '/rombongan': 'rombongan' };
   var LINKS = [['#/', 'Beranda', 'home'], ['#/daftar', 'Formulir Pendaftaran', 'daftar'], ['#/cek', 'Cek Status', 'cek'], ['#/panduan', 'Panduan', 'panduan']];
   var main, cur = { key: null, page: null, mounted: false };
 
@@ -37,7 +37,7 @@
   function markActive() {
     // Tombol "Daftar" di bar atas hanya tampil di Beranda, Cek Status, dan E-Tiket (disembunyikan di Formulir & Panduan).
     document.body.setAttribute('data-page', cur.key || '');
-    var nd = document.getElementById('navDaftar'); if (nd) nd.style.display = (cur.key === 'daftar' || cur.key === 'panduan') ? 'none' : '';
+    var nd = document.getElementById('navDaftar'); if (nd) nd.style.display = (cur.key === 'daftar' || cur.key === 'panduan' || cur.key === 'rombongan') ? 'none' : '';
     document.querySelectorAll('#nav [data-key]').forEach(function (a) {
       if (a.getAttribute('data-key') === cur.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });

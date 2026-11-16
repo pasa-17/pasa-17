@@ -274,7 +274,7 @@
       '<div class="field consent" data-f="setuju"><div class="consent-h">' + U.icon('shield') + ' Persetujuan (wajib dicentang)</div><label class="check"><input type="checkbox" id="setuju" name="setuju"' + (d.setuju ? ' checked' : '') + ' aria-describedby="setuju-e"><span>Saya menyetujui <a href="#" data-syarat>ketentuan &amp; tata tertib</a> ' + esc(p().nama_singkat) + ' dan menyatakan data yang diisi sudah benar.</span></label><div class="err-msg" id="setuju-e" role="alert"></div></div>' +
       '<div id="submitErr" aria-live="assertive"></div>' +
       '<button type="submit" class="btn btn-primary btn-xl btn-block" id="btnDaftar"' + (st.sending ? ' disabled' : '') + '>Daftarkan &amp; Dapatkan E-Tiket ' + U.icon('ticket') + '</button>' +
-      '<p class="form-note">Satu formulir untuk satu anak. Untuk anak lain, isi formulir lagi setelah selesai.</p>';
+      '<p class="form-note">Satu formulir untuk satu anak. Untuk anak lain, isi formulir lagi setelah selesai. <a href="#/rombongan">Mendaftar bersama satu sekolah / kelas? Gunakan formulir rombongan.</a></p>';
     return sec('akhir', 5, 'Kirim Pendaftaran', 'Periksa lagi, lalu tekan tombol daftar.', 'c-akhir', h);
   }
   function formHtml() {

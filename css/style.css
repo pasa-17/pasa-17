@@ -987,3 +987,13 @@ body[data-page="daftar"] .footer { margin-top: 32px; padding-top: 28px; }
 /* kode rombongan */
 .kode-row{display:flex;gap:8px}.kode-row .input{flex:1;text-transform:uppercase;letter-spacing:.04em}
 .kode-msg{margin-top:6px;font-size:14px;min-height:0}.kode-ok{color:#2C4E30;font-weight:600;display:inline-flex;gap:6px;align-items:center}.kode-ok svg{width:16px;height:16px}.kode-no{color:#93000A;font-weight:600}
+
+/* pendaftaran rombongan */
+.rb-form{display:grid;gap:18px;max-width:860px;margin:0 auto}.rb-card{padding:22px}.rb-card h2{margin:0 0 14px;font-size:20px}
+.rb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.rb-head h2{margin:0}
+.rb-rows{display:grid;gap:12px;margin:12px 0 16px}.rb-row{display:grid;grid-template-columns:34px 1fr 40px;gap:10px;align-items:start;padding:12px;border:1.5px solid var(--outline-variant,#E2DFD6);border-radius:16px;background:var(--surface-low,#F7F5EE)}
+.rb-no{width:34px;height:34px;border-radius:50%;background:#0D1B2A;color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+.rb-f{display:grid;gap:8px;min-width:0}.rb-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.rb-f .input,.rb-f .select{width:100%;min-width:0}
+@media(max-width:640px){.rb-g{grid-template-columns:1fr}}
+.rb-done{text-align:center;display:grid;gap:14px;justify-items:center;max-width:640px;margin:0 auto}.rb-ok{width:64px;height:64px;border-radius:50%;background:#E3EDE3;color:#2C4E30;display:grid;place-items:center}.rb-ok svg{width:34px;height:34px}
+.rb-list{display:grid;gap:8px;width:100%;text-align:left}.rb-list div{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:10px 14px;border-radius:12px;background:var(--surface-low,#F7F5EE)}.rb-list small{grid-column:2;opacity:.7}
