@@ -256,11 +256,11 @@
         return '<article class="prow" data-id="' + h(p.id) + '">' +
           '<label class="pk"><input type="checkbox" data-sel aria-label="Pilih ' + h(p.nama) + '"' + (sel[p.id] ? ' checked' : '') + '></label>' +
           '<div class="c-id"><span class="code">' + h(p.kode) + '</span></div>' +
-          '<div class="c-name"><span class="av ' + (p.gender === 'P' ? 'f' : 'm') + '">' + h(U.initials(p.nama)) + '</span><div><b>' + h(p.nama) + '</b><small>' + (p.gender === 'P' ? 'Perempuan' : p.gender === 'L' ? 'Laki-laki' : '') + ' · ' + h(p.jenjang) + (p.sekolah ? ' · ' + h(p.sekolah) : '') + '</small></div></div>' +
+          '<div class="c-name"><span class="av ' + (p.gender === 'P' ? 'f' : 'm') + '">' + h(U.initials(p.nama)) + '</span><div><b>' + h(p.nama) + '</b><small>' + (p.gender === 'P' ? 'Perempuan' : p.gender === 'L' ? 'Laki-laki' : '') + ' · ' + h(p.jenjang) + (p.sekolah ? ' · ' + h(p.sekolah) : '') + (p.kodeRombongan ? ' · <b>Rombongan ' + h(p.kodeRombongan) + '</b>' : '') + '</small></div></div>' +
           '<div class="c-age"><b>' + h(p.jenjang || (p.usia ? p.usia + ' th' : '—')) + '</b></div>' +
           '<div class="c-wali"><b>' + h(p.wali) + '</b><a href="' + h(M.waLink(p.wa)) + '" target="_blank" rel="noopener">' + h(p.wa) + '</a></div>' +
           '<div class="c-size"><span class="size-tag">' + h(p.ukuran) + '</span></div>' +
-          '<div class="c-amt"><b>' + U.rupiah(p.infaq) + '</b><small>' + (p.metodeBayar ? h(p.metodeBayar) + ' · ' : '') + h(M.fmtTime(p.dibuat)) + '</small></div>' +
+          '<div class="c-amt"><b>' + U.rupiah(p.infaq) + '</b><small>' + (p.diskon ? 'potongan ' + U.rupiah(p.diskon) + ' · ' : '') + (p.metodeBayar ? h(p.metodeBayar) + ' · ' : '') + h(M.fmtTime(p.dibuat)) + '</small></div>' +
           '<div class="c-proof">' + (p.adaBukti ? '<button type="button" class="btn btn-soft btn-sm" data-bukti>' + U.icon('eye') + ' Bukti</button>' : '<span class="muted">—</span>') + '</div>' +
           '<div class="c-stat"><span class="badge ' + M.statusClass(p.statusInfaq) + '">' + h(M.statusLabel(p.statusInfaq)) + '</span>' + (p.catatanPanitia ? '<small>' + h(p.catatanPanitia) + '</small>' : '') + '</div>' +
           '<div class="c-act">' +

@@ -12,8 +12,8 @@
   var PARENT = { kota: 'prov', kec: 'kota', desa: 'kec' };
 
   function fresh() {
-    return { d: { nama: '', gender: '', jenjang: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wa: '', email: '', cara: 'transfer', ukuran: '', infaq: '', medis: '', setuju: false },
-      bukti: null, err: {}, sending: false, pan: { open: false, level: 'prov', q: '' } };
+    return { d: { nama: '', gender: '', jenjang: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wa: '', email: '', cara: 'transfer', ukuran: '', infaq: '', kode: '', medis: '', setuju: false },
+      bukti: null, kode: null, err: {}, sending: false, pan: { open: false, level: 'prov', q: '' } };
   }
   var st = fresh(), root = null, pub = null, guard = null;
 
@@ -154,16 +154,33 @@
 
   // ---------- ringkasan ----------
   function updateSummary() {
-    var d = st.d, z = size(), amt = parseInt(d.infaq, 10) || 0;
+    var d = st.d, z = size(), amt = parseInt(d.infaq, 10) || 0, pot = st.kode ? Math.min(st.kode.potongan, amt) : 0;
     var gl = d.gender === 'L' ? 'Ikhwan' : d.gender === 'P' ? 'Akhwat' : '';
     var el = root && root.querySelector('#sumBody'); if (!el) return;
     el.innerHTML = '<div class="mini-ticket"><div class="mt-top"><span>' + esc(p().nama_singkat) + ' • ' + esc(String(p().lokasi).split(/[,&]/)[0].replace(/\s+$/, '')) + '</span><b>Draft</b></div>' +
       '<div class="nm">' + esc(d.nama || 'Nama calon santri') + '</div>' +
       '<div class="sub">' + [gl, d.jenjang].filter(Boolean).map(esc).join(' • ') + (gl || d.jenjang ? '' : '—') + '</div>' +
       '<div class="mt-grid"><div><small>Kaos peserta</small><b>' + (z ? esc(z.label) + ' (LD ' + esc(z.lebar) + ' × TB ' + esc(z.panjang) + ' cm)' : '—') + '</b></div>' +
-      '<div><small>Infaq</small><b class="o">' + (amt ? U.rupiah(amt) : '—') + '</b></div></div></div>' +
-      '<div class="rows"><div><span>Infaq operasional camp</span><span>' + U.rupiah(amt) + '</span></div><div><span>Biaya verifikasi sistem</span><span>Gratis (Rp0)</span></div>' +
-      '<div class="tot"><span>Total diterima</span><b>' + U.rupiah(amt) + '</b></div></div>';
+      '<div><small>Infaq</small><b class="o">' + (amt ? U.rupiah(Math.max(0, amt - pot)) : '—') + '</b></div></div></div>' +
+      '<div class="rows"><div><span>Infaq operasional camp</span><span>' + U.rupiah(amt) + '</span></div>' +
+      (pot ? '<div><span>Potongan rombongan' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + '</span><span>− ' + U.rupiah(pot) + '</span></div>' : '') +
+      '<div><span>Biaya verifikasi sistem</span><span>Gratis (Rp0)</span></div>' +
+      '<div class="tot"><span>' + (pot ? 'Total yang dibayar' : 'Total diterima') + '</span><b>' + U.rupiah(Math.max(0, amt - pot)) + '</b></div></div>';
+  }
+
+  function kodeMsg() {
+    if (!st.kode) return '';
+    return '<span class="kode-ok">' + U.icon('check') + ' Kode <b>' + esc(st.kode.kode) + '</b> berlaku' + (st.kode.nama ? ' (' + esc(st.kode.nama) + ')' : '') + (st.kode.potongan ? ': potongan ' + U.rupiah(st.kode.potongan) + ' per anak' : '') + '.</span>';
+  }
+  function cekKode() {
+    var v = (st.d.kode || '').trim(), m = root.querySelector('#kodeMsg'); if (!m) return;
+    if (!v) { st.kode = null; m.innerHTML = ''; updateSummary(); return; }
+    m.innerHTML = '<span class="muted">Memeriksa kode…</span>';
+    A.post('cekKodeRombongan', { kode: v }, 20000).then(function (r) {
+      if (r && r.success) { st.kode = r.data; m.innerHTML = kodeMsg(); clearErr('kode'); }
+      else { st.kode = null; m.innerHTML = '<span class="kode-no">' + esc((r && r.message) || 'Kode tidak dikenali.') + '</span>'; }
+      updateSummary();
+    }, function () { m.innerHTML = '<span class="kode-no">Gagal memeriksa kode. Coba lagi.</span>'; });
   }
 
   // ---------- bidang formulir ----------
@@ -242,6 +259,8 @@
       }).join('') + '</div>') +
         fld('infaq', 'Atau nominal lain', '<div class="input-affix"><span class="pre" aria-hidden="true">Rp</span><input class="input" id="infaq" name="infaq" inputmode="numeric" autocomplete="off" value="' + (isQuick || !cur ? '' : cur) + '" placeholder="Contoh: 175000" aria-describedby="infaq-h infaq-e"></div>',
           { help: 'Minimum ' + U.rupiah(minInfaq()) + '. Boleh lebih sebagai infaq sukarela. <span id="infaqFmt"></span>' }) +
+        fld('kode', 'Kode Rombongan', '<div class="kode-row"><input class="input" id="kode" name="kode" autocomplete="off" autocapitalize="characters" maxlength="30" value="' + esc(d.kode) + '" placeholder="Contoh: SDIT-BIM"><button type="button" class="btn btn-soft" data-kode-cek>Terapkan</button></div><div class="kode-msg" id="kodeMsg" aria-live="polite">' + kodeMsg() + '</div>',
+          { opt: true, help: 'Isi bila mendaftar bersama rombongan sekolah/kelas yang mendapat potongan. Kode diberikan panitia.' }) +
         group('cara', 'Cara Pembayaran', true, chips('cara', [['transfer', 'Transfer sekarang'], ['tunai', 'Bayar tunai ke panitia']], d.cara === 'tunai' ? 'tunai' : 'transfer'));
       if (d.cara === 'tunai') {
         h += '<div class="alert alert-info">' + U.icon('info') + '<span><b>Bayar tunai.</b> Infaq diserahkan langsung kepada panitia, tidak perlu bukti transfer. Status pendaftaran <b>Bayar Tunai</b> dan menjadi <b>Lunas</b> setelah panitia menerima pembayaran.</span></div>';
@@ -287,6 +306,7 @@
     if (!(n >= minInfaq())) e.infaq = 'Infaq minimal ' + U.rupiah(minInfaq()) + '.';
     if (d.cara !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
     if (fc('medis').tampil && fc('medis').wajib && !d.medis.trim()) e.medis = 'Catatan medis wajib diisi (tulis "-" bila tidak ada).';
+    if ((d.kode || '').trim() && !st.kode) e.kode = 'Tekan tombol Terapkan untuk memeriksa kode rombongan, atau kosongkan kolomnya.';
     if (!d.setuju) e.setuju = 'Anda harus menyetujui ketentuan untuk melanjutkan.';
     return e;
   }
@@ -368,7 +388,7 @@
     var d = st.d;
     var payload = {
       nama: d.nama.trim(), gender: d.gender, jenjang: d.jenjang, alamat: (composeAlamat(), d.alamat.trim()),
-      wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), medis: d.medis.trim(),
+      wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), kode_rombongan: st.kode ? st.kode.kode : '', medis: d.medis.trim(),
       setuju: true, cara: d.cara === 'tunai' ? 'tunai' : 'transfer',
       bukti: d.cara === 'tunai' || !st.bukti ? null : { nama: st.bukti.nama, base64: st.bukti.base64 }
     };
@@ -402,6 +422,7 @@
     var t = e.target;
     if (t.id === 'addrQ') { if (e.type !== 'input') return; st.pan.q = t.value; var ul = root.querySelector('#addrList'); if (ul) ul.innerHTML = listHtml(); return; }
     var n = t.name; if (!n) return;
+    if (n === 'kode') { st.d.kode = t.value.toUpperCase(); if (t.value !== st.d.kode) t.value = st.d.kode; if (st.kode && st.kode.kode !== st.d.kode.replace(/\s+/g, '')) { st.kode = null; var km = root.querySelector('#kodeMsg'); if (km) km.innerHTML = ''; updateSummary(); } clearErr('kode'); return; }
     if (n === 'amt') { st.d.infaq = t.value; var c = root.querySelector('#infaq'); if (c) c.value = ''; clearErr('amt'); clearErr('infaq'); updateSummary(); updateInfaqFmt(); return; }
     if (n === 'infaq') {
       var digits = t.value.replace(/\D/g, '').slice(0, 9); if (digits !== t.value) t.value = digits;
@@ -416,6 +437,7 @@
     updateSummary();
   }
   function onClick(e) {
+    if (e.target.closest('[data-kode-cek]')) { e.preventDefault(); cekKode(); return; }
     var tg = e.target.closest('[data-addr-toggle]'); if (tg) { e.preventDefault(); if (st.pan.open) closePanel(); else openPanel(); return; }
     var pk = e.target.closest('[data-addr-pick]'); if (pk) { e.preventDefault(); pickAddr(pk.getAttribute('data-addr-pick')); return; }
     var bk = e.target.closest('[data-addr-back]'); if (bk) { e.preventDefault(); backAddr(bk.getAttribute('data-addr-back')); return; }

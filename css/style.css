@@ -983,3 +983,7 @@ body[data-page="daftar"] .loc-card,
 body[data-page="daftar"] .footer .f-cols > div:nth-child(1),
 body[data-page="daftar"] .footer .f-cols > div:nth-child(2) { display: none; }
 body[data-page="daftar"] .footer { margin-top: 32px; padding-top: 28px; }
+
+/* kode rombongan */
+.kode-row{display:flex;gap:8px}.kode-row .input{flex:1;text-transform:uppercase;letter-spacing:.04em}
+.kode-msg{margin-top:6px;font-size:14px;min-height:0}.kode-ok{color:#2C4E30;font-weight:600;display:inline-flex;gap:6px;align-items:center}.kode-ok svg{width:16px;height:16px}.kode-no{color:#93000A;font-weight:600}
