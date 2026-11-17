@@ -201,6 +201,14 @@
   function sec(key, no, title, sub, cls, inner) {
     return '<section class="fsec ' + cls + '" data-sec="' + key + '"><header class="fsec-h"><span class="fsec-n">' + no + '</span><div><h2>' + title + '</h2>' + (sub ? '<p>' + sub + '</p>' : '') + '</div></header><div class="fsec-b">' + inner + '</div></section>';
   }
+  // Metode pembayaran yang diaktifkan panitia (Pengaturan > Infaq & Rekening)
+  function caraOpts() {
+    var s = p() || {}, o = [];
+    if (s.bayar_transfer !== 'false') o.push(['transfer', 'Transfer sekarang']);
+    if (s.bayar_tunai !== 'false') o.push(['tunai', 'Bayar tunai ke panitia']);
+    return o.length ? o : [['transfer', 'Transfer sekarang']];
+  }
+  function caraNow() { var o = caraOpts(), c = st.d.cara; return o.some(function (x) { return x[0] === c; }) ? c : o[0][0]; }
   function chips(name, items, cur) {
     return '<div class="chips seg">' + items.map(function (it) {
       return '<label class="chip"><input type="radio" name="' + name + '" value="' + it[0] + '"' + (cur === it[0] ? ' checked' : '') + '><span>' + it[1] + '</span></label>';
@@ -262,8 +270,8 @@
           { help: 'Minimum ' + U.rupiah(minInfaq()) + '. Boleh lebih sebagai infaq sukarela. <span id="infaqFmt"></span>' }) +
         fld('kode', 'Kode Rombongan', '<div class="kode-row"><input class="input" id="kode" name="kode" autocomplete="off" autocapitalize="characters" maxlength="30" value="' + esc(d.kode) + '" placeholder="Contoh: SDIT-BIM"><button type="button" class="btn btn-soft" data-kode-cek>Terapkan</button></div><div class="kode-msg" id="kodeMsg" aria-live="polite">' + kodeMsg() + '</div>',
           { opt: true, help: 'Isi bila mendaftar bersama rombongan sekolah/kelas yang mendapat potongan. Kode diberikan panitia.' }) +
-        group('cara', 'Cara Pembayaran', true, chips('cara', [['transfer', 'Transfer sekarang'], ['tunai', 'Bayar tunai ke panitia']], d.cara === 'tunai' ? 'tunai' : 'transfer'));
-      if (d.cara === 'tunai') {
+        (caraOpts().length > 1 ? group('cara', 'Cara Pembayaran', true, chips('cara', caraOpts(), caraNow())) : '');
+      if (caraNow() === 'tunai') {
         h += '<div class="alert alert-info">' + U.icon('info') + '<span><b>Bayar tunai.</b> Infaq diserahkan langsung kepada panitia, tidak perlu bukti transfer. Status pendaftaran <b>Bayar Tunai</b> dan menjadi <b>Lunas</b> setelah panitia menerima pembayaran.</span></div>';
       } else {
         h += '<div class="pay-box"><div class="pay-h">' + U.icon('bank') + ' Transfer ke rekening resmi</div>' + S.rekening(p(), { cls: 'rek-box' }) +
@@ -305,7 +313,7 @@
     if (!size()) e.ukuran = d.gender ? 'Pilih ukuran kaos.' : 'Pilih jenis kelamin dulu, lalu ukuran kaos.';
     var n = parseInt(d.infaq, 10);
     if (!(n >= minInfaq())) e.infaq = 'Infaq minimal ' + U.rupiah(minInfaq()) + '.';
-    if (d.cara !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
+    if (caraNow() !== 'tunai' && !st.bukti) e.bukti = 'Unggah bukti transfer.';
     if (fc('medis').tampil && fc('medis').wajib && !d.medis.trim()) e.medis = 'Catatan medis wajib diisi (tulis "-" bila tidak ada).';
     if ((d.kode || '').trim() && !st.kode) e.kode = 'Tekan tombol Terapkan untuk memeriksa kode rombongan, atau kosongkan kolomnya.';
     if (!d.setuju) e.setuju = 'Anda harus menyetujui ketentuan untuk melanjutkan.';
@@ -390,10 +398,10 @@
     var payload = {
       nama: d.nama.trim(), gender: d.gender, jenjang: d.jenjang, alamat: (composeAlamat(), d.alamat.trim()),
       wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), kode_rombongan: st.kode ? st.kode.kode : '', medis: d.medis.trim(),
-      setuju: true, cara: d.cara === 'tunai' ? 'tunai' : 'transfer',
-      bukti: d.cara === 'tunai' || !st.bukti ? null : { nama: st.bukti.nama, base64: st.bukti.base64 }
+      setuju: true, cara: caraNow(),
+      bukti: caraNow() === 'tunai' || !st.bukti ? null : { nama: st.bukti.nama, base64: st.bukti.base64 }
     };
-    st.sending = true; U.showBusy('Mengirim pendaftaran…', (d.cara === 'tunai' ? 'Mengirim data pendaftaran. ' : 'Mengunggah data dan bukti transfer. ') + 'Mohon jangan tutup halaman ini.');
+    st.sending = true; U.showBusy('Mengirim pendaftaran…', (caraNow() === 'tunai' ? 'Mengirim data pendaftaran. ' : 'Mengunggah data dan bukti transfer. ') + 'Mohon jangan tutup halaman ini.');
     var btn = root.querySelector('#btnDaftar'); if (btn) btn.disabled = true;
     function reset() { st.sending = false; var b = root.querySelector('#btnDaftar'); if (b) b.disabled = false; }
     function showBox(html) { var box = root.querySelector('#submitErr'); if (box) { box.innerHTML = html; box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
